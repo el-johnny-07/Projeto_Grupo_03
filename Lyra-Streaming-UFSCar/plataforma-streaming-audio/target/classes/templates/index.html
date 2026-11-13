@@ -1,0 +1,2286 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title th:text="#{app.title}">Lyra UFSCar — Plataforma Integrada de Streaming e Compartilhamento de Áudio Gratuito</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    if (window.tailwind) window.tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'] }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      --bg-app: #f8fafc;
+      --bg-surface: #ffffff;
+      --bg-subtle: #f1f5f9;
+      --bg-input: #ffffff;
+      --text-primary: #0f172a;
+      --text-secondary: #334155;
+      --text-muted: #64748b;
+      --border-color: #e2e8f0;
+      --accent: #059669;
+      --accent-hover: #047857;
+      --accent-soft: rgba(16, 185, 129, 0.12);
+    }
+    html.dark {
+      --bg-app: #0b0f19;
+      --bg-surface: #111827;
+      --bg-subtle: #1e293b;
+      --bg-input: #0f172a;
+      --text-primary: #f8fafc;
+      --text-secondary: #cbd5e1;
+      --text-muted: #94a3b8;
+      --border-color: #1f2937;
+      --accent: #10b981;
+      --accent-hover: #34d399;
+      --accent-soft: rgba(16, 185, 129, 0.15);
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-app);
+      color: var(--text-primary);
+      transition: background-color 0.2s ease, color 0.2s ease;
+      overflow-x: hidden;
+    }
+    .surface-card {
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .surface-subtle {
+      background-color: var(--bg-subtle);
+      border: 1px solid var(--border-color);
+    }
+    .theme-input {
+      background-color: var(--bg-input);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+    }
+    .theme-text-primary { color: var(--text-primary); }
+    .theme-text-secondary { color: var(--text-secondary); }
+    .theme-text-muted { color: var(--text-muted); }
+    .theme-border { border-color: var(--border-color); }
+
+    .grad-emerald { background: linear-gradient(135deg, #059669 0%, #10b981 55%, #0d9488 100%); }
+    .grad-indigo  { background: linear-gradient(135deg, #4338ca 0%, #6366f1 55%, #0284c7 100%); }
+    .grad-amber   { background: linear-gradient(135deg, #b45309 0%, #f59e0b 55%, #ea580c 100%); }
+    .grad-rose    { background: linear-gradient(135deg, #be123c 0%, #f43f5e 55%, #9333ea 100%); }
+    .grad-cyan    { background: linear-gradient(135deg, #0e7490 0%, #06b6d4 55%, #2563eb 100%); }
+    .grad-violet  { background: linear-gradient(135deg, #5b21b6 0%, #8b5cf6 55%, #db2777 100%); }
+
+    button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    @keyframes pulseBar {
+      0%, 100% { transform: scaleY(0.35); }
+      50% { transform: scaleY(1); }
+    }
+    .eq-bar-1 { animation: pulseBar 0.7s infinite ease-in-out; }
+    .eq-bar-2 { animation: pulseBar 0.5s infinite ease-in-out 0.15s; }
+    .eq-bar-3 { animation: pulseBar 0.85s infinite ease-in-out 0.3s; }
+  </style>
+  <link rel="stylesheet" href="/css/ondesonora.css">
+</head>
+<body class="min-h-screen flex flex-col">
+  <main id="welcomePage" class="flex-1 grid place-items-center p-5">
+    <section class="surface-card rounded-2xl shadow-xl w-full max-w-sm p-6 sm:p-8">
+      <span class="brand-symbol" aria-hidden="true">♪</span><h1 class="text-2xl font-bold theme-text-primary mb-5">Lyra</h1>
+      <div class="flex gap-2 surface-subtle rounded-xl p-1 mb-5">
+        <button type="button" id="welcomeLogin" onclick="window.app.setWelcomeTab('login')" class="flex-1 rounded-lg py-2 text-sm font-semibold">Entrar</button>
+        <button type="button" id="welcomeRegister" onclick="window.app.setWelcomeTab('register')" class="flex-1 rounded-lg py-2 text-sm font-semibold">Criar conta</button>
+      </div>
+      <div id="welcomeForm"></div>
+    </section>
+  </main>
+  <div id="workspacePage" class="hidden flex-1 flex-col">
+
+  <div class="music-shell">
+    <aside class="music-sidebar" aria-label="Navegação">
+      <button type="button" class="music-brand" onclick="window.app.navigate('explorar')">
+        <span class="brand-symbol" aria-hidden="true">♪</span> Lyra
+      </button>
+      <nav class="music-nav" aria-label="Menu principal">
+        <button type="button" data-nav="explorar" data-icon="⌂" onclick="window.app.navigate('explorar')"></button>
+        <button type="button" data-nav="busca" data-icon="⌕" onclick="window.app.navigate('busca')"></button>
+        <button type="button" data-nav="biblioteca" data-icon="♫" onclick="window.app.navigate('biblioteca')"></button>
+        <button type="button" data-nav="artistas" data-icon="◎" onclick="window.app.navigate('artistas')"></button>
+        <button type="button" data-nav="estudio" data-icon="＋" onclick="window.app.navigate('estudio')"></button>
+        <button type="button" data-nav="telemetria" data-icon="↗" onclick="window.app.navigate('telemetria')"></button>
+        <button type="button" data-nav="moderacao" data-icon="⚑" onclick="window.app.navigate('moderacao')"></button>
+        <button type="button" data-nav="admin" data-icon="⚙" onclick="window.app.navigate('admin')"></button>
+      </nav>
+    </aside>
+    <div class="music-content">
+      <header class="music-topbar">
+        <label class="music-search">
+          <span aria-hidden="true">⌕</span>
+          <input id="headerSearchInput" type="search" aria-label="Buscar no catálogo" placeholder="O que você quer ouvir?" oninput="window.app.handleQuickSearch(this.value)">
+        </label>
+        <div class="music-preferences">
+          <button type="button" onclick="window.app.toggleTheme()" title="Alternar tema"><span id="themeIcon">☀</span> <span id="themeLabel">Claro</span></button>
+          <button type="button" onclick="window.app.toggleLanguage()" title="Alternar idioma"><span id="langBadgeText">PT-BR</span></button>
+          <button type="button" id="btnOpenAuthModal" onclick="window.app.openAuthModal()">
+            <img id="accountPicture" alt="" class="hidden w-5 h-5 rounded-full object-cover" />
+            <span id="currentUserBadgeText">Conta</span>
+          </button>
+        </div>
+      </header>
+      <main id="spaViewport" class="music-viewport"></main>
+    </div>
+  </div>
+
+  <!-- DYNAMIC QUEUE DRAWER -->
+  <aside id="queueDrawer" class="fixed right-4 bottom-24 z-40 w-80 sm:w-96 max-h-[68vh] surface-card rounded-2xl shadow-2xl flex flex-col hidden">
+    <div class="p-3.5 border-b theme-border flex items-center justify-between">
+      <div>
+        <h3 id="lblQueueTitle" class="text-sm font-bold theme-text-primary">Fila de reprodução</h3>
+        <p id="lblQueueSubtitle" class="text-[11px] theme-text-muted">Reprodução contínua • Salta faixas suspensas</p>
+      </div>
+      <button type="button" onclick="window.app.toggleQueueDrawer()" class="theme-text-muted hover:opacity-80 p-1">✕</button>
+    </div>
+    <div class="p-2.5 border-b theme-border flex items-center justify-between gap-2 surface-subtle">
+      <button type="button" id="btnClearQueue" onclick="window.app.clearQueue()" class="text-[11px] px-2.5 py-1 rounded-lg surface-card theme-text-secondary">
+        Limpar
+      </button>
+    </div>
+    <div id="queueListContainer" class="p-3 overflow-y-auto space-y-2 flex-1"></div>
+  </aside>
+
+  <!-- PERSISTENT AUDIO PLAYER BAR -->
+  <footer aria-label="Persistent Audio Player" class="music-player">
+    <div class="music-player-inner">
+
+      <!-- Track Info -->
+      <div class="player-track flex items-center gap-3 min-w-0">
+        <div id="playerCoverArt" class="w-12 h-12 rounded-xl grad-emerald flex items-center justify-center shrink-0 shadow-sm">
+          <div id="playerEqualizer" class="flex items-end gap-0.5 h-4 hidden">
+            <span class="w-1 h-4 bg-white rounded eq-bar-1"></span>
+            <span class="w-1 h-4 bg-white rounded eq-bar-2"></span>
+            <span class="w-1 h-4 bg-white rounded eq-bar-3"></span>
+          </div>
+          <svg id="playerStaticIcon" class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+        </div>
+        <div class="min-w-0 flex-1">
+          <div class="flex items-center gap-2">
+            <p id="playerTrackTitle" class="text-sm font-bold theme-text-primary truncate">Nenhuma faixa selecionada</p>
+            <span id="playerFormatBadge" class="player-format text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shrink-0">—</span>
+          </div>
+          <p id="playerTrackAuthor" class="text-xs theme-text-muted truncate">—</p>
+          <div class="flex items-center gap-2 mt-0.5">
+          </div>
+        </div>
+        <button
+          type="button"
+          id="playerFavButton"
+          onclick="window.app.toggleFavoriteCurrentTrack()"
+          class="p-2 rounded-xl surface-subtle hover:opacity-80 transition text-sm"
+          title="Favoritar"
+        >
+          ♥
+        </button>
+      </div>
+
+      <!-- Controls & Seek Bar -->
+      <div class="player-controls flex flex-col items-center gap-1.5">
+        <div class="flex items-center gap-2">
+          <button type="button" id="btnShuffle" onclick="window.app.toggleShuffle()" class="px-2 py-1 rounded-lg text-xs font-medium surface-subtle theme-text-secondary">🔀 Shuffle</button>
+          <button type="button" aria-label="Faixa anterior" onclick="window.app.prevTrack()" class="px-2 py-1 rounded-lg surface-subtle theme-text-primary text-xs">⏮</button>
+          <button type="button" data-skip-control onclick="window.app.seekRelative(-10)" class="px-2 py-1 rounded-lg text-[11px] font-mono surface-subtle theme-text-secondary">-10s</button>
+          <button type="button" id="btnPlayPause" aria-label="Reproduzir ou pausar" onclick="window.app.togglePlayPause()" class="w-9 h-9 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold flex items-center justify-center shadow">▶</button>
+          <button type="button" data-skip-control onclick="window.app.seekRelative(10)" class="px-2 py-1 rounded-lg text-[11px] font-mono surface-subtle text-emerald-600 dark:text-emerald-400 font-semibold">+10s</button>
+          <button type="button" aria-label="Próxima faixa" onclick="window.app.nextTrack()" class="px-2 py-1 rounded-lg surface-subtle theme-text-primary text-xs">⏭</button>
+          <button type="button" id="btnRepeat" onclick="window.app.toggleRepeat()" class="px-2 py-1 rounded-lg text-xs font-medium surface-subtle theme-text-secondary">🔁 Off</button>
+        </div>
+        <div class="w-full flex items-center gap-2.5">
+          <span id="playerCurrentTime" class="text-[11px] font-mono theme-text-muted w-10 text-right">00:00</span>
+          <input id="playerSeekSlider" aria-label="Posição da reprodução" type="range" min="0" max="100" value="0" oninput="window.app.seekToSecond(this.value)" class="flex-1 accent-emerald-600 h-1.5 rounded-lg cursor-pointer" />
+          <span id="playerTotalDuration" class="text-[11px] font-mono theme-text-muted w-10">00:00</span>
+        </div>
+      </div>
+
+      <!-- Adaptive Stream Quality & Volume -->
+      <div class="player-tools flex items-center justify-end gap-2 flex-wrap">
+        <div class="flex items-center gap-1.5 surface-subtle rounded-xl px-2 py-1">
+          <button type="button" onclick="window.app.toggleMute()" id="btnMute" aria-label="Ativar ou silenciar som" class="text-xs">🔊</button>
+          <input id="volumeSlider" aria-label="Volume" type="range" min="0" max="100" value="80" oninput="window.app.setVolume(this.value)" class="w-14 accent-emerald-600 h-1.5 rounded-lg cursor-pointer" />
+        </div>
+
+        <button type="button" onclick="window.app.toggleQueueDrawer()" class="px-2.5 py-1.5 rounded-xl text-xs font-semibold surface-subtle theme-text-primary flex items-center gap-1.5">
+          <span id="lblQueueBtn">Fila</span>
+          <span id="queueCountBadge" class="px-1.5 py-0.2 rounded-full text-[10px] bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-bold">0</span>
+        </button>
+      </div>
+    </div>
+  </footer>
+
+  </div>
+  <!-- MODAL: AUTHENTICATION & PROFILE -->
+  <div id="authModal" class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="surface-card rounded-2xl max-w-lg w-full p-5 shadow-2xl">
+      <div class="flex items-center justify-between border-b theme-border pb-3 mb-4">
+        <div>
+          <h2 id="authModalTitle" class="text-base font-bold theme-text-primary">Minha conta</h2>
+        </div>
+        <button type="button" onclick="window.app.closeAuthModal()" class="theme-text-muted hover:opacity-80 p-1">✕</button>
+      </div>
+      <div class="flex gap-1.5 mb-4 surface-subtle p-1 rounded-xl">
+        <button type="button" onclick="window.app.setAuthTab('profile')" id="tabBtnProfile" class="flex-1 py-1.5 rounded-lg text-xs font-semibold">Perfil</button>
+        <button type="button" onclick="window.app.setAuthTab('recover')" id="tabBtnRecover" class="flex-1 py-1.5 rounded-lg text-xs font-semibold">Senha</button>
+        <button type="button" onclick="window.app.logoutSession()" class="flex-1 py-1.5 rounded-lg text-xs font-semibold text-rose-500">Sair</button>
+      </div>
+      <div id="authModalBody"></div>
+    </div>
+  </div>
+
+  <!-- MODAL: REPORT ABUSE -->
+  <div id="reportModal" class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="surface-card rounded-2xl max-w-md w-full p-5 shadow-2xl">
+      <div class="flex items-center justify-between border-b theme-border pb-3 mb-4">
+        <div>
+          <h2 id="reportModalHeading" class="text-base font-bold theme-text-primary">Denunciar faixa</h2>
+          <p id="reportModalTrackLabel" class="text-xs text-emerald-600 dark:text-emerald-400 mt-0.5"></p>
+        </div>
+        <button type="button" onclick="window.app.closeReportModal()" class="theme-text-muted p-1">✕</button>
+      </div>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-medium theme-text-secondary mb-1">Motivo</label>
+          <select id="reportReasonSelect" class="w-full theme-input rounded-xl px-3 py-2 text-xs">
+            <option value="Violação de Direitos Autorais / Plágio">Violação de Direitos Autorais / Plágio</option>
+            <option value="Uso de Sample ou Fonograma Sem Licença">Uso de Sample ou Fonograma Sem Licença</option>
+            <option value="Conteúdo Impróprio ou Violação dos Termos">Conteúdo Impróprio ou Violação dos Termos</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium theme-text-secondary mb-1">Fundamentação / Technical Details</label>
+          <textarea id="reportDetailsInput" rows="3" placeholder="Descreva os apontamentos..." class="w-full theme-input rounded-xl px-3 py-2 text-xs"></textarea>
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="window.app.closeReportModal()" class="px-3 py-1.5 rounded-xl text-xs surface-subtle theme-text-secondary">Cancelar</button>
+          <button type="button" onclick="window.app.submitReport()" class="px-4 py-1.5 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white">Enviar Denúncia</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: DUPLICATE TRACK IN PLAYLIST CONFIRMATION -->
+  <div id="duplicateConfirmModal" class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="surface-card rounded-2xl max-w-md w-full p-5 shadow-2xl">
+      <h3 class="text-base font-bold text-amber-600 dark:text-amber-400 mb-2">⚠️ Faixa já adicionada</h3>
+      <p id="duplicateModalText" class="text-xs theme-text-secondary leading-relaxed mb-4"></p>
+      <div class="flex justify-end gap-2">
+        <button type="button" onclick="window.app.cancelDuplicatePlaylistInsert()" class="px-3 py-1.5 rounded-xl text-xs surface-subtle theme-text-secondary">Cancelar</button>
+        <button type="button" onclick="window.app.confirmDuplicatePlaylistInsert()" class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-amber-500 text-slate-950">Reinserir</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST CONTAINER -->
+  <div id="toastContainer" aria-live="polite" class="fixed top-16 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none"></div>
+
+  <script th:inline="javascript">
+    (function () {
+      const serverLang = /*[[${activeLang}]]*/ 'pt';
+      const serverSection = /*[[${initialSection}]]*/ 'explorar';
+
+      // Complete Bilingual Dictionary (Português & English)
+      const I18N = {
+        pt: {
+          searchPlaceholder: 'O que você quer ouvir?',
+          accountBtn: 'Conta / Login',
+          themeLight: 'Claro',
+          themeDark: 'Escuro',
+          queueBtn: 'Fila',
+          queueTitle: 'Fila de reprodução',
+          queueSubtitle: 'Próximas faixas',
+          nav: {
+            explorar: 'Início',
+            busca: 'Buscar',
+            artistas: 'Artistas e álbuns',
+            biblioteca: 'Sua biblioteca',
+            estudio: 'Publicar áudio',
+            telemetria: 'Estatísticas',
+            moderacao: 'Moderação',
+            admin: 'Administração',
+          },
+          btnQueue: '+ Fila',
+          btnFav: '♡ Favoritar',
+          btnFavActive: '♥ Favorito',
+          btnReport: '⚑ Denunciar',
+          addPlaylistPrompt: '+ Playlist...'
+        },
+        en: {
+          searchPlaceholder: 'What do you want to listen to?',
+          accountBtn: 'Account / Sign In',
+          themeLight: 'Light',
+          themeDark: 'Dark',
+          queueBtn: 'Queue',
+          queueTitle: 'Playback Queue',
+          queueSubtitle: 'Up next',
+          nav: {
+            explorar: 'Home',
+            busca: 'Search',
+            artistas: 'Artists & Albums',
+            biblioteca: 'Your library',
+            estudio: 'Publish Audio',
+            telemetria: 'Telemetry',
+            moderacao: 'Moderation',
+            admin: 'Administration',
+          },
+          btnQueue: '+ Queue',
+          btnFav: '♡ Favorite',
+          btnFavActive: '♥ Favorited',
+          btnReport: '⚑ Report',
+          addPlaylistPrompt: '+ Playlist...'
+        }
+      };
+
+      const initialState = {
+        lang: serverLang === 'en' ? 'en' : 'pt',
+        theme: 'dark',
+        currentView: serverSection || 'explorar',
+        authModalTab: 'profile',
+        selectedArtistId: 1,
+        selectedAlbumId: 1,
+        selectedPlaylistId: 1,
+        reportTargetTrackId: null,
+        pendingDuplicateInsert: null,
+        searchFilters: { q: '', category: 'TODOS', genre: 'todos', tag: '' },
+        analyticsPeriod: '30d',
+        uploadDraft: {
+          title: '',
+          category: 'MUSICA',
+          modality: 'SINGLE',
+          albumId: 1,
+          authors: '',
+          genre: '',
+          releaseYear: 2026,
+          tags: '',
+          description: '',
+          audioFormat: 'WAV',
+          bitrateKbps: 1411,
+          coverWidth: 1600,
+          coverHeight: 1600,
+          durationSeconds: 196,
+          coverGrad: 'grad-emerald'
+        },
+        currentUser: {
+          id: 1,
+          fullName: 'João Pedro Elias',
+          email: 'joao.ouvinte@ufscar.br',
+          role: 'OUVINTE',
+          blocked: false,
+          bio: 'Estudante de Engenharia Elétrica na UFSCar (RA: 824565).',
+          favoriteTrackIds: [1, 4],
+          followedArtistIds: [1, 2]
+        },
+        users: [
+          {
+            id: 1,
+            fullName: 'João Pedro Elias',
+            email: 'joao.ouvinte@ufscar.br',
+            passwordPlainDemo: '123456',
+            role: 'OUVINTE',
+            blocked: false,
+            bio: 'Estudante de Engenharia Elétrica na UFSCar (RA: 824565).',
+            favoriteTrackIds: [1, 4],
+            followedArtistIds: [1, 2]
+          },
+          {
+            id: 2,
+            fullName: 'Patrick Ladeira Kachan',
+            email: 'patrick.criador@ufscar.br',
+            passwordPlainDemo: '123456',
+            role: 'CRIADOR',
+            blocked: false,
+            bio: 'Criador independente e apresentador do Podcast Engenharia em Frequência (RA: 769211).',
+            favoriteTrackIds: [2],
+            followedArtistIds: [1, 3]
+          },
+          {
+            id: 3,
+            fullName: 'Tiago Felix Carrare',
+            email: 'tiago.moderador@ufscar.br',
+            passwordPlainDemo: '123456',
+            role: 'MODERADOR',
+            blocked: false,
+            bio: 'Moderador responsável pela curadoria de direitos autorais (RA: 800149).',
+            favoriteTrackIds: [1],
+            followedArtistIds: [1]
+          },
+          {
+            id: 4,
+            fullName: 'Prof. Dr. Delano Medeiros Beder',
+            email: 'admin@ufscar.br',
+            passwordPlainDemo: '123456',
+            role: 'ADMINISTRADOR',
+            blocked: false,
+            bio: 'Docente Responsável e Administrador Mestre de Governança da Plataforma.',
+            favoriteTrackIds: [1, 3],
+            followedArtistIds: [1, 2, 3]
+          }
+        ],
+        artists: [
+          {
+            id: 1,
+            artisticName: 'Horizonte Acústico',
+            biography: 'Coletivo de música instrumental brasileira captado em estúdio com masterização 24-bit WAV e FLAC sem perdas.',
+            photoGrad: 'grad-emerald',
+            genres: 'MPB Instrumental, Jazz Brasileiro',
+            ownerUserId: 2,
+            followersCount: 1420
+          },
+          {
+            id: 2,
+            artisticName: 'Podcast Engenharia em Frequência',
+            biography: 'Programa semanal produzido na UFSCar sobre Engenharia de Software, padrão MVC, testes automatizados e streaming.',
+            photoGrad: 'grad-indigo',
+            genres: 'Podcast, Engenharia de Software',
+            ownerUserId: 2,
+            followersCount: 985
+          },
+          {
+            id: 3,
+            artisticName: 'Aurora Boreal Sintética',
+            biography: 'Duo de música eletrônica atmosférica, synthwave e lo-fi para sessões de programação.',
+            photoGrad: 'grad-amber',
+            genres: 'Synthwave, Lo-Fi, Eletrônica',
+            ownerUserId: 2,
+            followersCount: 2150
+          }
+        ],
+        albums: [
+          {
+            id: 1,
+            title: 'Crônicas do Cerrado (Master Lossless)',
+            modality: 'ALBUM',
+            artistId: 1,
+            artistName: 'Horizonte Acústico',
+            releaseYear: 2026,
+            releaseDate: '2026-08-15',
+            description: 'Álbum gravado em São Carlos com instrumentos acústicos em WAV sem compressão.',
+            coverGrad: 'grad-emerald',
+            participatingArtists: 'Horizonte Acústico, Quarteto São Carlos'
+          },
+          {
+            id: 2,
+            title: 'Temporada 2026: Arquitetura & Escala',
+            modality: 'PODCAST',
+            artistId: 2,
+            artistName: 'Podcast Engenharia em Frequência',
+            releaseYear: 2026,
+            releaseDate: '2026-09-01',
+            description: 'Série de episódios técnicos sobre arquitetura MVC, testes JUnit e requisitos.',
+            coverGrad: 'grad-indigo',
+            participatingArtists: 'João Elias, Patrick Kachan, Tiago Carrare'
+          },
+          {
+            id: 3,
+            title: 'Noites no Campus EP',
+            modality: 'EP',
+            artistId: 3,
+            artistName: 'Aurora Boreal Sintética',
+            releaseYear: 2026,
+            releaseDate: '2026-09-18',
+            description: 'EP com paisagens sonoras sintéticas para foco e estudo.',
+            coverGrad: 'grad-amber',
+            participatingArtists: 'Aurora Boreal Sintética'
+          }
+        ],
+        tracks: [],
+        playlists: [
+          {
+            id: 1,
+            name: 'Foco & Programação na UFSCar',
+            description: 'Seleção instrumental e lo-fi para estudar Engenharia de Software.',
+            publicVisible: true,
+            ownerUserId: 1,
+            ownerName: 'João Pedro Elias',
+            trackIds: []
+          },
+          {
+            id: 2,
+            name: 'Maratona Podcast & Synth',
+            description: 'Episódios técnicos intercalados com música eletrônica.',
+            publicVisible: true,
+            ownerUserId: 2,
+            ownerName: 'Patrick Ladeira Kachan',
+            trackIds: []
+          }
+        ],
+        history: [],
+        reports: [],
+        auditLogs: [
+          {
+            id: 901,
+            actorName: 'SISTEMA (CRON 24h)',
+            actorRole: 'ADMINISTRADOR',
+            action: 'BACKUP_AUTOMATICO',
+            target: 'snapshot_2026-11-11.json',
+            details: 'Rotina diária automatizada de backup dos bancos relacionais e catálogo concluída.',
+            timestamp: '2026-11-11 18:00'
+          }
+        ],
+        player: {
+          currentTrackId: null,
+          isPlaying: false,
+          currentTime: 0,
+          listenedContinuousSeconds: 0,
+          validatedCurrentSession: false,
+          volume: 80,
+          muted: false,
+          shuffle: false,
+          repeatMode: 'OFF',
+          queueTrackIds: []
+        }
+      };
+
+      let state = JSON.parse(JSON.stringify(initialState));
+      let audioCtx = null;
+      let playbackTimer = null;
+      let telemetryChartInstance = null;
+      const originalAudio = new Audio();
+      let originalTrackId = null;
+      let playbackRequest = 0;
+      let selectedAudioFile = null;
+      let selectedAudioDuration = 0;
+      let selectedCoverFile = null;
+      let selectedCoverUrl = null;
+      let coverReady = false;
+      let isPublishing = false;
+      let welcomeTab = 'login';
+      let accountRequestInProgress = false;
+      let updatingFavorite = false;
+      state.currentUser = null;
+
+      function escapeHtml(value) {
+        return String(value ?? '').replace(/[&<>"']/g, character =>
+          ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]);
+      }
+
+      function imageUrl(value) {
+        return typeof value === 'string' && /^\/api\/images\/[a-f\d-]{36}$/.test(value) ? value : '';
+      }
+
+      function clearCoverSelection() {
+        if (selectedCoverUrl) URL.revokeObjectURL(selectedCoverUrl);
+        selectedCoverFile = null;
+        selectedCoverUrl = null;
+        coverReady = false;
+      }
+
+      async function catalogRequest(url, options) {
+        const response = await fetch(url, options);
+        const body = await response.json().catch(() => null);
+        if (!response.ok) {
+          const fallback = response.status === 413
+            ? tr('O áudio ultrapassa o limite de 150 MB.', 'The audio exceeds the 150 MB limit.')
+            : tr('Não foi possível concluir a operação no catálogo.', 'The catalog operation failed.');
+          const message = typeof body?.error === 'string' && body.message === undefined ? body.error : fallback;
+          throw new Error(message.replace(/\s*\((?:RF|RNF|UC)\d+(?:\s*[/,–&-]\s*(?:RF|RNF|UC)\d+)*\)/g, ''));
+        }
+        return body;
+      }
+
+      function accountRequest(url, method, body) {
+        return catalogRequest(url, {
+          method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+        });
+      }
+
+      function useAccount(account) {
+        const entering = !state.currentUser?.authenticated;
+        state.currentUser = { ...account, authenticated: true };
+        if (entering) {
+          state.currentView = 'explorar';
+          state.uploadDraft.authors = account.fullName;
+          loadUploadedTracks();
+        }
+        showWorkspace(true);
+        renderCurrentView();
+        syncPlayerBarUI();
+      }
+
+      function showWorkspace(visible) {
+        document.getElementById('welcomePage').classList.toggle('hidden', visible);
+        const workspace = document.getElementById('workspacePage');
+        workspace.classList.toggle('hidden', !visible);
+        workspace.classList.toggle('flex', visible);
+      }
+
+      function renderWelcome() {
+        const register = welcomeTab === 'register';
+        document.getElementById('welcomeLogin').classList.toggle('bg-emerald-600', !register);
+        document.getElementById('welcomeLogin').classList.toggle('text-white', !register);
+        document.getElementById('welcomeRegister').classList.toggle('bg-emerald-600', register);
+        document.getElementById('welcomeRegister').classList.toggle('text-white', register);
+        document.getElementById('welcomeForm').innerHTML = `
+          <form class="space-y-3" onsubmit="event.preventDefault(); window.app.submitWelcome(this)">
+            ${register ? `<label class="block text-sm">Nome completo
+              <input name="fullName" autocomplete="name" maxlength="255" required class="theme-input block mt-1 w-full rounded-xl px-3 py-2" />
+            </label>` : ''}
+            <label class="block text-sm">E-mail
+              <input name="email" type="email" autocomplete="username" maxlength="255" required class="theme-input block mt-1 w-full rounded-xl px-3 py-2" />
+            </label>
+            <label class="block text-sm">Senha
+              <input name="password" type="password" autocomplete="${register ? 'new-password' : 'current-password'}" ${register ? 'minlength="6" placeholder="Pelo menos 6 caracteres"' : ''} required class="theme-input block mt-1 w-full rounded-xl px-3 py-2" />
+            </label>
+            <p data-error role="alert" class="text-sm text-rose-500" hidden></p>
+            <button class="w-full rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 py-2.5 text-sm font-semibold text-white">${register ? 'Criar conta' : 'Entrar'}</button>
+          </form>`;
+      }
+
+      async function restoreAccount() {
+        try {
+          const response = await fetch('/api/auth/session', { cache: 'no-store' });
+          if (response.ok) useAccount(await response.json());
+        } catch (error) {
+          showToast(tr('Não foi possível verificar a sessão.', 'Could not check the account session.'), 'error');
+        }
+      }
+
+      function uploadedTrack(track) {
+        return { ...track, id: -track.id - 1, serverId: track.id, coverGrad: 'grad-emerald' };
+      }
+
+      async function loadUploadedTracks() {
+        try {
+          const tracks = await catalogRequest('/api/catalog/tracks/uploads');
+          const newTracks = tracks.map(uploadedTrack)
+            .filter(track => !state.tracks.some(item => item.id === track.id));
+          state.tracks.unshift(...newTracks);
+          renderCurrentView();
+        } catch (error) {
+          showToast(tr('Não foi possível carregar as faixas enviadas.', 'Uploaded tracks could not be loaded.'), 'error');
+        }
+      }
+
+      async function syncAudioPlayback(track) {
+        const request = ++playbackRequest;
+        if (!track?.serverId) {
+          originalAudio.pause();
+          originalTrackId = null;
+          originalAudio.removeAttribute('src');
+          originalAudio.load();
+          if (state.player.isPlaying) playSynthesizedNoteForCurrentSecond();
+          return;
+        }
+        if (!state.player.isPlaying) {
+          originalAudio.pause();
+          return;
+        }
+        try {
+          if (originalTrackId !== track.id) {
+            originalAudio.pause();
+            const signed = await catalogRequest(`/api/stream/${track.serverId}/signed-url?quality=original`);
+            if (request !== playbackRequest) return;
+            originalTrackId = track.id;
+            originalAudio.src = signed.streamUrl;
+          }
+          originalAudio.volume = state.player.volume / 100;
+          originalAudio.muted = state.player.muted;
+          await originalAudio.play();
+        } catch (error) {
+          if (request !== playbackRequest) return;
+          originalTrackId = null;
+          state.player.isPlaying = false;
+          showToast(tr('Não foi possível reproduzir o áudio original.', 'The original audio could not be played.'), 'error');
+        }
+        if (request === playbackRequest) {
+          syncPlayerBarUI();
+          renderCurrentView();
+        }
+      }
+
+      function t(key) {
+        const dict = I18N[state.lang] || I18N.pt;
+        return dict[key] || key;
+      }
+
+      function tr(ptText, enText) {
+        return state.lang === 'en' ? enText : ptText;
+      }
+
+      function formatSeconds(sec) {
+        const s = Math.max(0, Math.floor(Number(sec) || 0));
+        const m = Math.floor(s / 60);
+        const rem = s % 60;
+        return String(m).padStart(2, '0') + ':' + String(rem).padStart(2, '0');
+      }
+
+      function nowFormatted() {
+        return new Date().toISOString().slice(0, 16).replace('T', ' ');
+      }
+
+      function showToast(message, type) {
+        const container = document.getElementById('toastContainer');
+        if (!container) return;
+        const colors = {
+          success: 'bg-emerald-600 text-white border-emerald-500',
+          warning: 'bg-amber-500 text-slate-950 border-amber-400',
+          error: 'bg-rose-600 text-white border-rose-500',
+          info: 'surface-card theme-text-primary'
+        };
+        const el = document.createElement('div');
+        el.className = `pointer-events-auto border rounded-xl px-3.5 py-2.5 text-xs font-semibold shadow-lg transition ${colors[type] || colors.info}`;
+        el.textContent = message;
+        container.appendChild(el);
+        setTimeout(() => {
+          if (el.parentNode) el.parentNode.removeChild(el);
+        }, 4000);
+      }
+
+      function playSynthesizedNoteForCurrentSecond() {
+        if (!state.player.isPlaying || state.player.muted || state.player.volume <= 0) return;
+        try {
+          if (!audioCtx) {
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContextClass) return;
+            audioCtx = new AudioContextClass();
+          }
+          if (audioCtx.state === 'suspended') audioCtx.resume();
+          const track = state.tracks.find(x => x.id === state.player.currentTrackId) || state.tracks[0];
+          if (!track || track.serverId) return;
+          const notes = track.synthNotes || [261.63, 329.63, 392.00, 523.25];
+          const freq = notes[state.player.currentTime % notes.length];
+
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = track.category === 'PODCAST' ? 'triangle' : 'sine';
+          osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+          const vol = (state.player.volume / 100) * 0.08;
+          gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.0008, audioCtx.currentTime + 0.75);
+
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start();
+          osc.stop(audioCtx.currentTime + 0.78);
+        } catch (e) {}
+      }
+
+      function logAudit(action, target, details) {
+        const actorName = state.currentUser ? state.currentUser.fullName : tr('Visitante', 'Guest');
+        const actorRole = state.currentUser ? state.currentUser.role : 'VISITANTE';
+        state.auditLogs.unshift({
+          id: Date.now(),
+          actorName,
+          actorRole,
+          action,
+          target,
+          details,
+          timestamp: nowFormatted()
+        });
+      }
+
+      function applyThemeAndLangUI() {
+        const htmlEl = document.documentElement;
+        if (state.theme === 'dark') {
+          htmlEl.classList.add('dark');
+        } else {
+          htmlEl.classList.remove('dark');
+        }
+        htmlEl.lang = state.lang === 'en' ? 'en-US' : 'pt-BR';
+
+        document.getElementById('themeIcon').textContent = state.theme === 'dark' ? '☀️' : '🌙';
+        document.getElementById('themeLabel').textContent = state.theme === 'dark' ? t('themeLight') : t('themeDark');
+        document.getElementById('langBadgeText').textContent = state.lang === 'en' ? '🇺🇸 EN-US' : '🇧🇷 PT-BR';
+        document.getElementById('headerSearchInput').placeholder = t('searchPlaceholder');
+        document.getElementById('lblQueueBtn').textContent = t('queueBtn');
+        document.getElementById('lblQueueTitle').textContent = t('queueTitle');
+        document.getElementById('lblQueueSubtitle').textContent = t('queueSubtitle');
+
+        const badge = document.getElementById('currentUserBadgeText');
+        const accountPicture = document.getElementById('accountPicture');
+        const avatar = imageUrl(state.currentUser?.profilePictureUrl);
+        accountPicture.classList.toggle('hidden', !avatar);
+        if (avatar) accountPicture.src = avatar;
+        else accountPicture.removeAttribute('src');
+        if (state.currentUser) {
+          badge.textContent = state.currentUser.fullName.split(' ')[0];
+        } else {
+          badge.textContent = t('accountBtn');
+        }
+
+        const navDict = I18N[state.lang].nav;
+        document.querySelectorAll('.music-nav button').forEach(btn => {
+          const target = btn.getAttribute('data-nav');
+          const role = state.currentUser?.role;
+          btn.hidden = (target === 'admin' && role !== 'ADMINISTRADOR')
+            || (target === 'moderacao' && role !== 'ADMINISTRADOR' && role !== 'MODERADOR');
+          btn.textContent = navDict[target] || target;
+          if (target === state.currentView) btn.setAttribute('aria-current', 'page');
+          else btn.removeAttribute('aria-current');
+        });
+      }
+
+      function syncPlayerBarUI() {
+        const track = state.tracks.find(x => x.id === state.player.currentTrackId) || state.tracks[0];
+        if (!track) {
+          document.getElementById('playerTrackTitle').textContent = tr('Nenhuma faixa selecionada', 'No track selected');
+          document.getElementById('playerTrackAuthor').textContent = '—';
+          document.getElementById('playerFormatBadge').textContent = '—';
+          document.getElementById('playerCurrentTime').textContent = '00:00';
+          document.getElementById('playerTotalDuration').textContent = '00:00';
+          document.getElementById('queueCountBadge').textContent = String(state.player.queueTrackIds.length);
+          renderQueueDrawerList();
+          return;
+        }
+
+        document.getElementById('playerTrackTitle').textContent = track.title;
+        document.getElementById('playerTrackAuthor').textContent = `${track.authors} • ${track.albumTitle || track.modality}`;
+        document.getElementById('playerFormatBadge').textContent = `${track.audioFormat} ${track.bitrateKbps} kbps`;
+
+        const coverEl = document.getElementById('playerCoverArt');
+        coverEl.className = `w-12 h-12 rounded-xl ${track.coverGrad || 'grad-emerald'} flex items-center justify-center shrink-0 shadow-sm`;
+        const cover = imageUrl(track.coverUrl);
+        coverEl.style.backgroundImage = cover ? `url("${cover}")` : '';
+        coverEl.style.backgroundSize = 'cover';
+        coverEl.style.backgroundPosition = 'center';
+
+        const eqEl = document.getElementById('playerEqualizer');
+        const iconEl = document.getElementById('playerStaticIcon');
+        if (state.player.isPlaying) {
+          eqEl.classList.remove('hidden');
+          iconEl.classList.add('hidden');
+          document.getElementById('btnPlayPause').textContent = '⏸';
+        } else {
+          eqEl.classList.add('hidden');
+          iconEl.classList.toggle('hidden', !!cover);
+          document.getElementById('btnPlayPause').textContent = '▶';
+        }
+
+        const seekSlider = document.getElementById('playerSeekSlider');
+        seekSlider.max = track.durationSeconds;
+        seekSlider.value = state.player.currentTime;
+        document.getElementById('playerCurrentTime').textContent = formatSeconds(state.player.currentTime);
+        document.getElementById('playerTotalDuration').textContent = formatSeconds(track.durationSeconds);
+
+        const favBtn = document.getElementById('playerFavButton');
+        const isFav = state.currentUser && state.currentUser.favoriteTrackIds.includes(track.id);
+        favBtn.className = isFav
+          ? 'p-2 rounded-xl bg-rose-500/15 text-rose-500 border border-rose-500/30 transition text-sm'
+          : 'p-2 rounded-xl surface-subtle theme-text-muted transition text-sm';
+
+        const repeat = { OFF: tr('Sem repetição', 'Repeat off'), ALL: tr('Repetir fila', 'Repeat queue'), ONE: tr('Repetir faixa', 'Repeat track') };
+        document.getElementById('btnRepeat').textContent = repeat[state.player.repeatMode];
+        const shuffle = document.getElementById('btnShuffle');
+        shuffle.textContent = tr('Aleatório', 'Shuffle');
+        shuffle.setAttribute('aria-pressed', String(state.player.shuffle));
+        shuffle.classList.toggle('bg-emerald-600', state.player.shuffle);
+        shuffle.classList.toggle('text-white', state.player.shuffle);
+        document.getElementById('queueCountBadge').textContent = String(state.player.queueTrackIds.length);
+        renderQueueDrawerList();
+      }
+
+      function recordValidatedAudition(track) {
+        if (state.player.validatedCurrentSession) return;
+        state.player.validatedCurrentSession = true;
+        track.playsTotal += 1;
+        track.playsLast24h += 1;
+        if (state.currentUser) {
+          state.history.unshift({
+            id: Date.now(),
+            userId: state.currentUser.id,
+            trackId: track.id,
+            trackTitle: track.title,
+            trackAuthors: track.authors,
+            listenedSeconds: state.player.listenedContinuousSeconds,
+            validatedOver30s: true,
+            playedAt: nowFormatted()
+          });
+        }
+
+        syncPlayerBarUI();
+      }
+
+      function startPlaybackInterval() {
+        if (playbackTimer) clearInterval(playbackTimer);
+        playbackTimer = setInterval(() => {
+          if (!state.player.isPlaying) return;
+          const track = state.tracks.find(x => x.id === state.player.currentTrackId);
+          if (!track || track.status !== 'ATIVO') {
+            app.nextTrack(true);
+            return;
+          }
+          if (track.serverId) {
+            if (originalTrackId !== track.id || originalAudio.paused || originalAudio.seeking) return;
+            const time = Math.floor(originalAudio.currentTime);
+            if (time > state.player.currentTime) state.player.listenedContinuousSeconds += 1;
+            state.player.currentTime = time;
+          } else {
+            state.player.currentTime += 1;
+            state.player.listenedContinuousSeconds += 1;
+            playSynthesizedNoteForCurrentSecond();
+          }
+
+          if (state.player.listenedContinuousSeconds >= 30 && !state.player.validatedCurrentSession) {
+            recordValidatedAudition(track);
+          }
+          if (!track.serverId && state.player.currentTime >= track.durationSeconds) {
+            if (state.player.repeatMode === 'ONE') {
+              state.player.currentTime = 0;
+            } else {
+              app.nextTrack(true);
+            }
+          }
+          syncPlayerBarUI();
+        }, 1000);
+      }
+
+      function renderQueueDrawerList() {
+        const container = document.getElementById('queueListContainer');
+        if (!container) return;
+        if (state.player.queueTrackIds.length === 0) {
+          container.innerHTML = `<p class="text-xs theme-text-muted text-center py-6">${tr('A fila está vazia.', 'Queue is empty.')}</p>`;
+          return;
+        }
+        container.innerHTML = state.player.queueTrackIds.map((id, idx) => {
+          const item = state.tracks.find(x => x.id === id);
+          if (!item) return '';
+          const isCurrent = item.id === state.player.currentTrackId;
+          const isSuspended = item.status !== 'ATIVO';
+          return `
+            <div class="flex items-center justify-between gap-2 p-2.5 rounded-xl ${isCurrent ? 'bg-emerald-500/15 border border-emerald-500/40' : 'surface-subtle'}">
+              <div class="min-w-0 flex-1">
+                <p class="text-xs font-semibold ${isSuspended ? 'line-through text-rose-500' : 'theme-text-primary'} truncate">#${idx + 1} ${escapeHtml(item.title)}</p>
+                <p class="text-[11px] theme-text-muted truncate">${escapeHtml(item.authors)}</p>
+              </div>
+              <div class="flex items-center gap-1 shrink-0">
+                <button type="button" onclick="window.app.playTrack(${item.id})" class="px-2 py-1 rounded-lg bg-emerald-600 text-white text-[11px]">▶</button>
+                <button type="button" onclick="window.app.removeFromQueueIndex(${idx})" class="px-2 py-1 rounded-lg surface-card theme-text-muted text-[11px]">✕</button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      function renderTrackCard(track) {
+        const isPlaying = state.player.currentTrackId === track.id && state.player.isPlaying;
+        const isFavorite = state.currentUser?.favoriteTrackIds.includes(track.id);
+        const cover = imageUrl(track.coverUrl);
+        const playlistOptions = state.playlists.map(playlist =>
+          `<option value="${playlist.id}">${escapeHtml(playlist.name)}</option>`).join('');
+
+        return `
+          <article class="music-card">
+            <button type="button" class="track-art ${track.coverGrad || 'grad-emerald'}" onclick="window.app.playTrack(${track.id})"
+              aria-label="${isPlaying ? tr('Pausar', 'Pause') : tr('Reproduzir', 'Play')} ${escapeHtml(track.title)}">
+              ${cover ? `<img src="${cover}" alt="" loading="lazy">` : '<span class="track-note" aria-hidden="true">♪</span>'}
+              <span class="track-play" aria-hidden="true">${isPlaying ? 'Ⅱ' : '▶'}</span>
+            </button>
+            <div class="track-info">
+              <h3 title="${escapeHtml(track.title)}">${escapeHtml(track.title)}</h3>
+              <p title="${escapeHtml(track.authors)}">${escapeHtml(track.authors)}</p>
+            </div>
+            <details class="track-menu">
+              <summary aria-label="${tr('Opções da faixa', 'Track options')}">⋯</summary>
+              <div class="track-actions">
+                <button type="button" onclick="window.app.addToQueue(${track.id}, false)">${tr('Adicionar à fila', 'Add to queue')}</button>
+                <button type="button" onclick="window.app.toggleFavoriteTrack(${track.id})">${isFavorite ? tr('Remover dos favoritos', 'Remove from favorites') : tr('Adicionar aos favoritos', 'Add to favorites')}</button>
+                <select aria-label="${tr('Adicionar à playlist', 'Add to playlist')}" onchange="if(this.value){window.app.addTrackToPlaylist(Number(this.value), ${track.id}); this.value='';}">
+                  <option value="">${tr('Adicionar à playlist', 'Add to playlist')}</option>
+                  ${playlistOptions}
+                </select>
+                <button type="button" onclick="window.app.openReportModal(${track.id})">${tr('Denunciar faixa', 'Report track')}</button>
+              </div>
+            </details>
+          </article>`;
+      }
+
+      function renderExplorarView() {
+        const activeTracks = state.tracks.filter(track => track.status === 'ATIVO');
+        const uploaded = activeTracks.filter(track => track.serverId);
+        const recent = (uploaded.length ? [...uploaded].sort((a, b) => b.serverId - a.serverId) : activeTracks).slice(0, 6);
+        const popular = [...activeTracks].sort((a, b) => b.playsLast24h - a.playsLast24h).slice(0, 6);
+        const followed = activeTracks.filter(track => state.currentUser?.followedArtistIds.includes(track.artistId)).slice(0, 6);
+        const renderShelf = (title, tracks) => tracks.length ? `
+          <section class="music-shelf">
+            <h2>${title}</h2>
+            <div class="music-grid">${tracks.map(renderTrackCard).join('')}</div>
+          </section>` : '';
+
+        return `
+          <div class="music-home">
+            <section class="music-intro">
+              <h1>${tr('Início', 'Home')}</h1>
+              <div class="music-filters">
+                <span aria-current="true">${tr('Tudo', 'All')}</span>
+                <button type="button" onclick="window.app.browseCategory('MUSICA')">${tr('Músicas', 'Music')}</button>
+                <button type="button" onclick="window.app.browseCategory('PODCAST')">Podcasts</button>
+              </div>
+            </section>
+            ${activeTracks.length === 0 ? `<p class="text-sm theme-text-muted py-4">${tr('Nenhuma faixa no catálogo. Clique em "Publicar áudio" no menu lateral para enviar suas músicas.', 'No tracks in the catalog. Click "Publish Audio" in the sidebar to upload your tracks.')}</p>` : ''}
+            ${renderShelf(tr('Adicionadas recentemente', 'Recently added'), recent)}
+            ${renderShelf(tr('Mais ouvidas', 'Most played'), popular)}
+            ${renderShelf(tr('Artistas que você segue', 'Artists you follow'), followed)}
+          </div>`;
+      }
+
+      // VIEW 2: BUSCA AVANÇADA
+      function renderBuscaView() {
+        const q = (state.searchFilters.q || '').trim().toLowerCase();
+        const cat = state.searchFilters.category;
+        const gen = state.searchFilters.genre.toLowerCase();
+        const tg = (state.searchFilters.tag || '').trim().toLowerCase();
+
+        const results = state.tracks.filter(item => {
+          if (item.status !== 'ATIVO') return false;
+          if (cat !== 'TODOS' && item.category !== cat) return false;
+          if (gen !== 'todos' && !item.genre.toLowerCase().includes(gen)) return false;
+          if (tg && !item.tags.toLowerCase().includes(tg)) return false;
+          if (!q) return true;
+          return (
+            item.title.toLowerCase().includes(q) ||
+            item.authors.toLowerCase().includes(q) ||
+            (item.albumTitle && item.albumTitle.toLowerCase().includes(q)) ||
+            item.genre.toLowerCase().includes(q) ||
+            item.tags.toLowerCase().includes(q)
+          );
+        });
+
+        return `
+          <div class="space-y-5">
+            <div class="surface-card rounded-2xl p-5 space-y-4">
+              <h1 class="music-page-title">${tr('Buscar', 'Search')}</h1>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <select onchange="window.app.updateSearchFilter('category', this.value)" class="theme-input rounded-xl px-3 py-2 text-xs">
+                  <option value="TODOS" ${cat === 'TODOS' ? 'selected' : ''}>${tr('Todas as Categorias', 'All Categories')}</option>
+                  <option value="MUSICA" ${cat === 'MUSICA' ? 'selected' : ''}>${tr('Música', 'Music')}</option>
+                  <option value="PODCAST" ${cat === 'PODCAST' ? 'selected' : ''}>Podcast</option>
+                </select>
+                <input type="search" aria-label="${tr('Buscar por tag', 'Search by tag')}" value="${escapeHtml(state.searchFilters.tag)}" onchange="window.app.updateSearchFilter('tag', this.value)" placeholder="${tr('Buscar por tag', 'Search by tag')}" class="theme-input rounded-xl px-3 py-2 text-xs" />
+                <button type="button" onclick="window.app.resetSearchFilters()" class="px-3 py-2 rounded-xl surface-subtle theme-text-secondary text-xs font-semibold">${tr('Limpar Filtros', 'Clear Filters')}</button>
+              </div>
+            </div>
+
+            ${results.length > 0 ? `
+              <div class="music-grid">${results.map(renderTrackCard).join('')}</div>
+            ` : `
+              <div class="surface-card rounded-2xl p-6 text-center space-y-3">
+                <h3 class="text-base font-bold text-amber-600 dark:text-amber-400">${tr('Nenhum resultado encontrado', 'No results found')}</h3>
+                <p class="text-xs theme-text-secondary">${tr('Experimente buscar por:', 'Try searching for:')}</p>
+                <div class="flex flex-wrap justify-center gap-2">
+                  ${['MPB', 'Podcast', 'FLAC', 'Lo-Fi'].map(term => `
+                    <button type="button" onclick="window.app.updateSearchFilter('q', '${term}')" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">${term}</button>
+                  `).join('')}
+                </div>
+              </div>
+            `}
+          </div>
+        `;
+      }
+
+      // VIEW 3: ARTISTAS E ÁLBUNS
+      function renderArtistasView() {
+        const artist = state.artists.find(a => a.id === state.selectedArtistId) || state.artists[0];
+        const artistAlbums = state.albums.filter(alb => alb.artistId === artist.id);
+        const artistTracks = state.tracks.filter(item => item.artistId === artist.id && item.status === 'ATIVO');
+        const isFollowing = state.currentUser && state.currentUser.followedArtistIds.includes(artist.id);
+
+        return `
+          <div class="space-y-6">
+            <div class="flex flex-wrap gap-2">
+              ${state.artists.map(a => `
+                <button type="button" onclick="window.app.openArtistProfile(${a.id})" class="px-3.5 py-2 rounded-xl text-xs font-bold transition ${a.id === artist.id ? 'bg-emerald-600 text-white' : 'surface-card theme-text-secondary'}">
+                  ${a.artisticName} (${a.followersCount})
+                </button>
+              `).join('')}
+            </div>
+
+            <section class="surface-card rounded-2xl p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div class="flex items-center gap-4">
+                <div class="w-16 h-16 rounded-2xl ${artist.photoGrad || 'grad-emerald'} flex items-center justify-center text-xl font-extrabold text-white shrink-0">
+                  ${artist.artisticName.slice(0, 2).toUpperCase()}
+                </div>
+                <div>
+                  <span class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">${artist.genres}</span>
+                  <h1 class="text-xl font-extrabold theme-text-primary">${artist.artisticName}</h1>
+                  <p class="text-xs theme-text-secondary max-w-2xl mt-0.5">${artist.biography}</p>
+                </div>
+              </div>
+              <button type="button" onclick="window.app.toggleFollowArtist(${artist.id})" class="px-4 py-2 rounded-xl text-xs font-bold ${isFollowing ? 'surface-subtle text-emerald-600 dark:text-emerald-400' : 'bg-emerald-600 text-white'}">
+                ${isFollowing ? tr('✓ Seguindo', '✓ Following') : tr('+ Seguir Artista', '+ Follow Artist')}
+              </button>
+            </section>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              ${artistAlbums.map(alb => {
+                const albTracks = state.tracks.filter(item => item.albumId === alb.id && item.status === 'ATIVO');
+                return `
+                  <div class="surface-card rounded-2xl p-4 space-y-3">
+                    <div class="flex items-center justify-between">
+                      <div>
+                        <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded surface-subtle theme-text-secondary">${alb.modality} • ${alb.releaseYear}</span>
+                        <h3 class="text-sm font-bold theme-text-primary mt-1">${alb.title}</h3>
+                      </div>
+                      <button type="button" onclick="window.app.playAlbum(${alb.id})" class="px-3 py-1.5 rounded-xl bg-emerald-600 text-white font-bold text-xs">▶</button>
+                    </div>
+                    <p class="text-xs theme-text-muted">${alb.description}</p>
+                    <div class="space-y-1.5 pt-2 border-t theme-border">
+                      ${albTracks.map((item, i) => `
+                        <div class="flex items-center justify-between text-xs surface-subtle px-3 py-1.5 rounded-lg">
+                          <span class="theme-text-primary font-medium truncate">${i + 1}. ${escapeHtml(item.title)} (${item.audioFormat})</span>
+                          <button type="button" onclick="window.app.playTrack(${item.id})" class="text-emerald-600 dark:text-emerald-400 font-bold ml-2">▶</button>
+                        </div>
+                      `).join('')}
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+
+            <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div class="surface-card rounded-2xl p-4 space-y-3">
+                <h3 class="text-sm font-bold theme-text-primary">${tr('Novo Perfil de Artista', 'New Artist Profile')}</h3>
+                <div class="grid grid-cols-2 gap-2">
+                  <input id="newArtistName" type="text" placeholder="${tr('Nome Artístico *', 'Artistic Name *')}" class="theme-input rounded-xl px-3 py-2 text-xs" />
+                  <input id="newArtistGenres" type="text" placeholder="${tr('Gêneros *', 'Genres *')}" class="theme-input rounded-xl px-3 py-2 text-xs" />
+                </div>
+                <textarea id="newArtistBio" rows="2" placeholder="${tr('Biografia...', 'Biography...')}" class="w-full theme-input rounded-xl px-3 py-2 text-xs"></textarea>
+                <button type="button" onclick="window.app.createArtistProfile()" class="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 text-white">${tr('Salvar Artista', 'Save Artist')}</button>
+              </div>
+
+              <div class="surface-card rounded-2xl p-4 space-y-3">
+                <h3 class="text-sm font-bold theme-text-primary">${tr('Novo Álbum Vinculando Faixas', 'New Album Linking Tracks')}</h3>
+                <div class="grid grid-cols-2 gap-2">
+                  <input id="newAlbumTitle" type="text" placeholder="${tr('Título do Álbum *', 'Album Title *')}" class="theme-input rounded-xl px-3 py-2 text-xs" />
+                  <select id="newAlbumModality" class="theme-input rounded-xl px-3 py-2 text-xs">
+                    <option value="ALBUM">ALBUM</option>
+                    <option value="EP">EP</option>
+                    <option value="SINGLE">SINGLE</option>
+                  </select>
+                </div>
+                <div class="surface-subtle rounded-xl p-2.5 space-y-1 max-h-24 overflow-y-auto">
+                  ${artistTracks.map(item => `
+                    <label class="flex items-center gap-2 text-xs theme-text-primary">
+                      <input type="checkbox" class="new-album-track-checkbox accent-emerald-600" value="${item.id}" checked />
+                      <span>${escapeHtml(item.title)}</span>
+                    </label>
+                  `).join('')}
+                </div>
+                <div class="flex gap-2">
+                  <button type="button" onclick="window.app.createAlbumWithTracks(false)" class="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 text-white">${tr('Publicar Álbum', 'Publish Album')}</button>
+                </div>
+              </div>
+            </section>
+          </div>
+        `;
+      }
+
+      // VIEW 4: BIBLIOTECA, PLAYLISTS E HISTÓRICO
+      function renderBibliotecaView() {
+        const selectedPlaylist = state.playlists.find(p => p.id === state.selectedPlaylistId) || state.playlists[0];
+        const favTracks = state.tracks.filter(item => state.currentUser.favoriteTrackIds.includes(item.id) && item.status === 'ATIVO');
+        const userHistory = state.history.filter(h => h.userId === state.currentUser.id);
+
+        return `
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+            <div class="lg:col-span-7 surface-card rounded-2xl p-5 space-y-4">
+              <h2 class="text-base font-bold theme-text-primary">${tr('Suas playlists', 'Custom Playlists')}</h2>
+              <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 surface-subtle p-3 rounded-xl">
+                <input id="newPlaylistName" type="text" placeholder="${tr('Nome da Playlist *', 'Playlist Name *')}" class="sm:col-span-5 theme-input rounded-lg px-2.5 py-1.5 text-xs" />
+                <input id="newPlaylistDesc" type="text" placeholder="${tr('Descrição', 'Description')}" class="sm:col-span-4 theme-input rounded-lg px-2.5 py-1.5 text-xs" />
+                <button type="button" onclick="window.app.createPlaylist()" class="sm:col-span-3 py-1.5 px-2 rounded-lg text-xs font-bold bg-emerald-600 text-white">+ ${tr('Criar', 'Create')}</button>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                ${state.playlists.map(p => `
+                  <button type="button" onclick="window.app.selectPlaylist(${p.id})" class="px-3 py-1.5 rounded-xl text-xs font-semibold ${selectedPlaylist && p.id === selectedPlaylist.id ? 'bg-emerald-600 text-white' : 'surface-subtle theme-text-secondary'}">
+                    ${p.name} (${p.publicVisible ? '🌐' : '🔒'})
+                  </button>
+                `).join('')}
+              </div>
+              ${selectedPlaylist ? `
+                <div class="surface-subtle rounded-xl p-4 space-y-3">
+                  <div class="flex items-center justify-between border-b theme-border pb-2">
+                    <div>
+                      <h3 class="text-sm font-bold theme-text-primary">${selectedPlaylist.name}</h3>
+                      <p class="text-xs theme-text-muted">${selectedPlaylist.description}</p>
+                    </div>
+                    <div class="flex gap-1.5">
+                      <button type="button" onclick="window.app.playPlaylist(${selectedPlaylist.id})" class="px-3 py-1 rounded-lg bg-emerald-600 text-white font-bold text-xs">▶</button>
+                      <button type="button" onclick="window.app.togglePlaylistVisibility(${selectedPlaylist.id})" class="px-2.5 py-1 rounded-lg surface-card theme-text-secondary text-xs">${selectedPlaylist.publicVisible ? '🔒' : '🌐'}</button>
+                    </div>
+                  </div>
+                  <div class="space-y-2">
+                    ${selectedPlaylist.trackIds.map((tid, idx) => {
+                      const item = state.tracks.find(x => x.id === tid);
+                      if (!item) return '';
+                      return `
+                        <div class="flex items-center justify-between gap-2 surface-card px-3 py-2 rounded-lg text-xs">
+                          <span class="font-semibold theme-text-primary truncate">${idx + 1}. ${escapeHtml(item.title)}</span>
+                          <div class="flex items-center gap-1">
+                            <button type="button" onclick="window.app.movePlaylistTrack(${selectedPlaylist.id}, ${idx}, -1)" class="px-2 py-0.5 rounded surface-subtle">↑</button>
+                            <button type="button" onclick="window.app.movePlaylistTrack(${selectedPlaylist.id}, ${idx}, 1)" class="px-2 py-0.5 rounded surface-subtle">↓</button>
+                            <button type="button" onclick="window.app.removePlaylistTrack(${selectedPlaylist.id}, ${idx})" class="px-2 py-0.5 rounded text-rose-500">✕</button>
+                          </div>
+                        </div>
+                      `;
+                    }).join('')}
+                  </div>
+                </div>
+              ` : ''}
+            </div>
+
+            <div class="lg:col-span-5 space-y-4">
+              <div class="surface-card rounded-2xl p-4 space-y-3">
+                <h2 class="text-sm font-bold theme-text-primary">♥ ${tr('Favoritos', 'Favorite Audio Tracks')}</h2>
+                <div class="space-y-2">
+                  ${favTracks.map(item => `
+                    <div class="flex items-center justify-between surface-subtle px-3 py-2 rounded-xl text-xs">
+                      <span class="font-semibold theme-text-primary truncate">${escapeHtml(item.title)} — ${escapeHtml(item.authors)}</span>
+                      <button type="button" onclick="window.app.playTrack(${item.id})" class="px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-bold">▶</button>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+              <div class="surface-card rounded-2xl p-4 space-y-3">
+                <h2 class="text-sm font-bold theme-text-primary">🕒 ${tr('Histórico', 'Playback History')}</h2>
+                <div class="space-y-2 max-h-56 overflow-y-auto">
+                  ${userHistory.map(h => `
+                    <div class="flex items-center justify-between surface-subtle px-3 py-2 rounded-xl text-xs">
+                      <div class="min-w-0">
+                        <p class="font-semibold theme-text-primary truncate">${escapeHtml(h.trackTitle)}</p>
+                        <p class="text-[11px] theme-text-muted">${h.playedAt}</p>
+                      </div>
+                      <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">${h.listenedSeconds}s</span>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // VIEW 5: PUBLICAR ÁUDIO
+      function renderEstudioView() {
+        const d = state.uploadDraft;
+        const myTracks = state.tracks.filter(item => item.serverId && item.creatorUserId === state.currentUser?.id && item.status !== 'REMOVIDO');
+
+        return `
+          <div class="space-y-6">
+            <div class="surface-card rounded-2xl p-5 space-y-4">
+              <div class="border-b theme-border pb-3">
+                <h1 class="text-lg font-bold theme-text-primary">${tr('Publicar áudio', 'Publish audio')}</h1>
+                <p class="text-xs theme-text-muted">${tr('WAV, FLAC ou MP3 de até 150 MB. Para MP3, use 320 kbps.', 'WAV, FLAC or MP3 up to 150 MB. For MP3, use 320 kbps.')}</p>
+              </div>
+              <label class="block text-xs font-bold theme-text-primary">
+                ${tr('Arquivo de áudio (WAV, FLAC ou MP3)', 'Audio file (WAV, FLAC or MP3)')}
+                <input type="file" accept=".wav,.flac,.mp3" ${isPublishing ? 'disabled' : ''} onchange="window.app.selectAudioFile(this.files[0])" class="block mt-1 w-full text-xs" />
+                ${selectedAudioFile ? `<span class="block mt-1 theme-text-muted">${escapeHtml(selectedAudioFile.name)}</span>` : ''}
+              </label>
+              <div class="flex flex-wrap items-center gap-3">
+                ${coverReady ? `<img src="${selectedCoverUrl}" alt="" class="w-14 h-14 rounded-xl object-cover" />` : ''}
+                <label class="block text-xs font-bold theme-text-primary">
+                  ${tr('Capa opcional (JPEG ou PNG, mínimo de 1400 × 1400 px)', 'Optional cover (JPEG or PNG, at least 1400 × 1400 px)')}
+                  <input type="file" accept="image/jpeg,image/png" ${isPublishing ? 'disabled' : ''} onchange="window.app.selectCoverFile(this.files[0])" class="block mt-1 w-full text-xs" />
+                  ${selectedCoverFile ? `<span class="block mt-1 theme-text-muted">${escapeHtml(selectedCoverFile.name)}</span>` : ''}
+                </label>
+                ${selectedCoverFile ? `<button type="button" onclick="window.app.selectCoverFile()" class="px-2.5 py-1 rounded-lg surface-subtle theme-text-secondary text-xs">${tr('Remover capa', 'Remove cover')}</button>` : ''}
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+                <input type="text" maxlength="255" value="${escapeHtml(d.title)}" oninput="window.app.updateUploadDraft('title', this.value)" placeholder="${tr('Título da Obra *', 'Track Title *')}" class="theme-input rounded-xl px-3 py-2 text-xs" />
+                <select aria-label="Categoria" onchange="window.app.updateUploadDraft('category', this.value)" class="theme-input rounded-xl px-3 py-2 text-xs">
+                  <option value="MUSICA" ${d.category === 'MUSICA' ? 'selected' : ''}>${tr('Música', 'Music')}</option>
+                  <option value="PODCAST" ${d.category === 'PODCAST' ? 'selected' : ''}>Podcast</option>
+                </select>
+                <select aria-label="Tipo de lançamento" onchange="window.app.updateUploadDraft('modality', this.value)" class="theme-input rounded-xl px-3 py-2 text-xs">
+                  <option value="SINGLE" ${d.modality === 'SINGLE' ? 'selected' : ''}>SINGLE</option>
+                  <option value="EP" ${d.modality === 'EP' ? 'selected' : ''}>EP</option>
+                  <option value="ALBUM" ${d.modality === 'ALBUM' ? 'selected' : ''}>ALBUM</option>
+                  <option value="PODCAST" ${d.modality === 'PODCAST' ? 'selected' : ''}>Podcast</option>
+                </select>
+                <input type="text" value="${escapeHtml(d.authors)}" oninput="window.app.updateUploadDraft('authors', this.value)" placeholder="${tr('Artista ou autores *', 'Artist or authors *')}" class="theme-input rounded-xl px-3 py-2 text-xs" />
+                <input type="text" value="${escapeHtml(d.genre)}" oninput="window.app.updateUploadDraft('genre', this.value)" placeholder="${tr('Gênero', 'Genre')}" class="theme-input rounded-xl px-3 py-2 text-xs" />
+                <input type="text" value="${escapeHtml(d.tags)}" oninput="window.app.updateUploadDraft('tags', this.value)" placeholder="Tags" class="theme-input rounded-xl px-3 py-2 text-xs" />
+
+              </div>
+              ${selectedAudioDuration ? `<p class="text-xs theme-text-muted">${d.audioFormat} · ${formatSeconds(selectedAudioDuration)} · ${d.bitrateKbps} kbps</p>` : ''}
+              <button type="button" ${isPublishing ? 'disabled' : ''} onclick="window.app.confirmPublishTrack()" class="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 text-white disabled:opacity-50">
+                ${isPublishing ? tr('Enviando…', 'Uploading…') : tr('Publicar', 'Publish')}
+              </button>
+            </div>
+
+            <div class="surface-card rounded-2xl p-5 space-y-3">
+              <h2 class="text-base font-bold theme-text-primary">${tr('Minhas publicações', 'My uploads')}</h2>
+              <div class="space-y-2">
+                ${myTracks.length === 0 ? `<p class="text-xs theme-text-muted">${tr('Você ainda não publicou faixas.', 'You have not published any tracks yet.')}</p>` : ''}
+                ${myTracks.map(item => `
+                  <div class="flex flex-wrap items-center justify-between gap-2 surface-subtle px-3.5 py-2.5 rounded-xl text-xs">
+                    <div>
+                      <strong class="theme-text-primary">${escapeHtml(item.title)}</strong> <span class="theme-text-muted">(${item.audioFormat} ${item.bitrateKbps}k • ${item.status})</span>
+                    </div>
+                    <div class="flex gap-1.5">
+                      <button type="button" onclick="window.app.quickEditTrackTitle(${item.id})" class="px-2.5 py-1 rounded-lg surface-card theme-text-secondary">${tr('Editar', 'Edit')}</button>
+                      <button type="button" onclick="window.app.removeTrackByAuthor(${item.id})" class="px-2.5 py-1 rounded-lg bg-rose-500/15 text-rose-500 font-semibold">${tr('Remover', 'Remove')}</button>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // VIEW 6: TELEMETRIA
+      function renderEstatísticasView() {
+        const activeTracks = state.tracks.filter(item => item.status !== 'REMOVIDO');
+        const mult = state.analyticsPeriod === '24h' ? 0.2 : (state.analyticsPeriod === '7d' ? 0.5 : 1.0);
+        const totalPlays = activeTracks.reduce((acc, item) => acc + Math.round(item.playsTotal * mult), 0);
+        const totalUnique = activeTracks.reduce((acc, item) => acc + Math.round(item.uniqueListeners * mult), 0);
+        const avgRet = (activeTracks.reduce((acc, item) => acc + item.avgRetentionPercent, 0) / Math.max(1, activeTracks.length)).toFixed(1);
+
+        return `
+          <div class="surface-card rounded-2xl p-5 space-y-5">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h1 class="text-lg font-bold theme-text-primary">${tr('Estatísticas e Indicadores do Criador', 'Creator Telemetry & Analytics')}</h1>
+                <p class="text-xs theme-text-muted">${tr('Execuções validadas (>30s), ouvintes únicos e retenção temporal', 'Validated plays (>30s), unique listeners and temporal retention')}</p>
+              </div>
+              <div class="flex gap-1 surface-subtle p-1 rounded-xl">
+                ${['24h', '7d', 'all'].map(p => `
+                  <button type="button" onclick="window.app.setAnalyticsPeriod('${p}')" class="px-3 py-1 rounded-lg text-xs font-semibold ${state.analyticsPeriod === p ? 'bg-emerald-600 text-white' : 'theme-text-secondary'}">${p.toUpperCase()}</button>
+                `).join('')}
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div class="surface-subtle rounded-xl p-4">
+                <span class="text-xs theme-text-muted">${tr('Execuções Validadas (>30s)', 'Validated Plays (>30s)')}</span>
+                <p class="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-1">${totalPlays.toLocaleString()}</p>
+              </div>
+              <div class="surface-subtle rounded-xl p-4">
+                <span class="text-xs theme-text-muted">${tr('Ouvintes Únicos', 'Unique Listeners')}</span>
+                <p class="text-2xl font-extrabold text-indigo-600 dark:text-indigo-400 mt-1">${totalUnique.toLocaleString()}</p>
+              </div>
+              <div class="surface-subtle rounded-xl p-4">
+                <span class="text-xs theme-text-muted">${tr('Retenção Temporal Média', 'Average Retention')}</span>
+                <p class="text-2xl font-extrabold text-amber-600 dark:text-amber-400 mt-1">${avgRet}%</p>
+              </div>
+            </div>
+
+            <div class="surface-subtle rounded-xl p-4">
+              <div class="relative h-72 w-full">
+                <canvas id="telemetryChartCanvas"></canvas>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      function initTelemetryChart() {
+        const canvas = document.getElementById('telemetryChartCanvas');
+        if (!canvas || typeof Chart === 'undefined') return;
+        if (telemetryChartInstance) telemetryChartInstance.destroy();
+        const activeTracks = state.tracks.filter(item => item.status !== 'REMOVIDO');
+        const mult = state.analyticsPeriod === '24h' ? 0.2 : (state.analyticsPeriod === '7d' ? 0.5 : 1.0);
+        const textColor = state.theme === 'dark' ? '#cbd5e1' : '#334155';
+
+        telemetryChartInstance = new Chart(canvas.getContext('2d'), {
+          type: 'bar',
+          data: {
+            labels: activeTracks.map(item => item.title.slice(0, 20)),
+            datasets: [
+              {
+                label: tr('Execuções Validadas (>30s)', 'Validated Plays (>30s)'),
+                data: activeTracks.map(item => Math.round(item.playsTotal * mult)),
+                backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                borderRadius: 6
+              },
+              {
+                label: tr('Ouvintes Únicos', 'Unique Listeners'),
+                data: activeTracks.map(item => Math.round(item.uniqueListeners * mult)),
+                backgroundColor: 'rgba(99, 102, 241, 0.8)',
+                borderRadius: 6
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { labels: { color: textColor } } },
+            scales: {
+              x: { ticks: { color: textColor } },
+              y: { ticks: { color: textColor } }
+            }
+          }
+        });
+      }
+
+      // VIEW 7: MODERAÇÃO
+      function renderModeracaoView() {
+        return `
+          <div class="surface-card rounded-2xl p-5 space-y-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <h1 class="text-lg font-bold theme-text-primary">${tr('Moderação de Denúncias', 'Abuse Report Moderation')}</h1>
+                <p class="text-xs theme-text-muted">${tr('Suspensão cautelar, indeferimento ou encerramento por perda de objeto', 'Precautionary suspension, dismissal or loss of object closure')}</p>
+              </div>
+              <button type="button" onclick="window.app.openReportModal(1)" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-rose-600 text-white">+ ${tr('Nova Denúncia', 'New Report')}</button>
+            </div>
+            <div class="space-y-3">
+              ${state.reports.map(rep => `
+                <div class="surface-subtle rounded-2xl p-4 space-y-3">
+                  <div class="flex items-center justify-between">
+                    <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-amber-500/20 text-amber-600 dark:text-amber-300">${rep.status}</span>
+                    <span class="text-xs theme-text-muted">${rep.createdAt}</span>
+                  </div>
+                  <h3 class="text-sm font-bold theme-text-primary">${escapeHtml(rep.trackTitle)} — ${escapeHtml(rep.creatorName)}</h3>
+                  <p class="text-xs theme-text-secondary"><strong>${rep.reason}:</strong> ${escapeHtml(rep.description)}</p>
+                  ${rep.status === 'PENDENTE' ? `
+                    <div class="space-y-2">
+                      <textarea id="modOpinion_${rep.id}" rows="2" class="w-full theme-input rounded-xl px-3 py-2 text-xs">Parecer técnico: confirmada procedência da denúncia autoral; aplica-se suspensão cautelar.</textarea>
+                      <div class="flex gap-2">
+                        <button type="button" onclick="window.app.resolveReport(${rep.id}, 'SUSPENDER')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-rose-600 text-white">${tr('Suspender Obra', 'Suspend Track')}</button>
+                        <button type="button" onclick="window.app.resolveReport(${rep.id}, 'INDEFERIR')" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-emerald-600 text-white">${tr('Indeferir e Arquivar', 'Dismiss & Archive')}</button>
+                      </div>
+                    </div>
+                  ` : `<p class="text-xs theme-text-muted"><strong>Parecer:</strong> ${rep.technicalOpinion}</p>`}
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }
+
+      // VIEW 8: ADMINISTRAÇÃO
+      function renderAdminView() {
+        return `
+          <div class="space-y-5">
+            <section class="surface-card rounded-2xl p-5 space-y-4">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h1 class="text-lg font-bold theme-text-primary">${tr('Governança e Administração da Plataforma', 'Platform Administration & Governance')}</h1>
+            <p class="text-xs theme-text-muted">${tr('Contas, permissões e cópias de segurança', 'Accounts, permissions and backups')}</p>
+                </div>
+                <button type="button" onclick="window.app.triggerManualBackup()" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-600 text-white">💾 ${tr('Executar Backup', 'Run Backup')}</button>
+              </div>
+              <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr class="border-b theme-border theme-text-muted">
+                      <th class="py-2 px-3">${tr('Usuário', 'User')}</th>
+                      <th class="py-2 px-3">E-mail</th>
+                <th class="py-2 px-3">${tr('Papel', 'Role')}</th>
+                      <th class="py-2 px-3">Status</th>
+                      <th class="py-2 px-3 text-right">${tr('Ação', 'Action')}</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y theme-border">
+                    ${state.users.map(u => `
+                      <tr>
+                        <td class="py-2.5 px-3 font-semibold theme-text-primary">${u.fullName}</td>
+                        <td class="py-2.5 px-3 font-mono theme-text-secondary">${u.email}</td>
+                        <td class="py-2.5 px-3">
+                          <select onchange="window.app.changeUserRole(${u.id}, this.value); this.value = window.app.getUserRole(${u.id});" class="theme-input rounded-lg px-2 py-1 text-xs font-semibold">
+                            <option value="OUVINTE" ${u.role === 'OUVINTE' ? 'selected' : ''}>OUVINTE</option>
+                            <option value="CRIADOR" ${u.role === 'CRIADOR' ? 'selected' : ''}>CRIADOR</option>
+                            <option value="MODERADOR" ${u.role === 'MODERADOR' ? 'selected' : ''}>MODERADOR</option>
+                            <option value="ADMINISTRADOR" ${u.role === 'ADMINISTRADOR' ? 'selected' : ''}>ADMINISTRADOR</option>
+                          </select>
+                        </td>
+                        <td class="py-2.5 px-3">${u.blocked ? 'BLOQUEADO' : 'ATIVO'}</td>
+                        <td class="py-2.5 px-3 text-right">
+                          <button type="button" onclick="window.app.toggleUserBlocked(${u.id})" class="px-2.5 py-1 rounded-lg surface-subtle theme-text-secondary">${u.blocked ? tr('Desbloquear', 'Unblock') : tr('Bloquear', 'Block')}</button>
+                        </td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <section class="surface-card rounded-2xl p-5 space-y-3">
+              <h2 class="text-base font-bold theme-text-primary">📜 ${tr('Livro Eletrônico de Auditoria', 'Electronic Audit Log')}</h2>
+              <div class="space-y-2 max-h-56 overflow-y-auto">
+                ${state.auditLogs.map(log => `
+                  <div class="surface-subtle rounded-xl px-3.5 py-2 flex items-center justify-between text-xs">
+                    <div>
+                      <span class="font-mono font-bold text-emerald-600 dark:text-emerald-400 mr-2">${log.action}</span>
+                      <strong class="theme-text-primary">${log.actorName}</strong> → <span class="theme-text-secondary">${log.target}</span>
+                      <p class="text-[11px] theme-text-muted">${log.details}</p>
+                    </div>
+                    <span class="text-[11px] font-mono theme-text-muted">${log.timestamp}</span>
+                  </div>
+                `).join('')}
+              </div>
+            </section>
+          </div>
+        `;
+      }
+
+      function renderCurrentView() {
+        const viewport = document.getElementById('spaViewport');
+        if (!viewport) return;
+        applyThemeAndLangUI();
+
+        switch (state.currentView) {
+          case 'explorar': viewport.innerHTML = renderExplorarView(); break;
+          case 'busca': viewport.innerHTML = renderBuscaView(); break;
+          case 'artistas': viewport.innerHTML = renderArtistasView(); break;
+          case 'biblioteca': viewport.innerHTML = renderBibliotecaView(); break;
+          case 'estudio': viewport.innerHTML = renderEstudioView(); break;
+          case 'telemetria':
+            viewport.innerHTML = renderEstatísticasView();
+            setTimeout(initTelemetryChart, 30);
+            break;
+          case 'moderacao': viewport.innerHTML = renderModeracaoView(); break;
+          case 'admin': viewport.innerHTML = renderAdminView(); break;
+          default: viewport.innerHTML = renderExplorarView();
+        }
+      }
+
+      function renderAuthModalContent() {
+        const body = document.getElementById('authModalBody');
+        if (!body) return;
+        ['recover', 'profile'].forEach(tab => {
+          const btn = document.getElementById('tabBtn' + tab.charAt(0).toUpperCase() + tab.slice(1));
+          if (btn) {
+            btn.className = state.authModalTab === tab
+              ? 'flex-1 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white'
+              : 'flex-1 py-1.5 rounded-lg text-xs font-semibold theme-text-secondary';
+          }
+        });
+
+        if (state.authModalTab === 'recover') {
+          body.innerHTML = state.currentUser?.authenticated ? `
+            <div class="space-y-3">
+              <input id="recCurrentPass" type="password" autocomplete="current-password" placeholder="${tr('Senha atual', 'Current password')}" class="w-full theme-input rounded-xl px-3 py-2 text-xs" />
+              <input id="recNewPass" type="password" autocomplete="new-password" placeholder="${tr('Nova senha', 'New password')}" class="w-full theme-input rounded-xl px-3 py-2 text-xs" />
+              <button type="button" onclick="window.app.submitPasswordRecovery()" class="w-full py-2 rounded-xl text-xs font-bold bg-emerald-600 text-white">${tr('Alterar senha', 'Change password')}</button>
+            </div>
+          ` : `<p class="text-xs theme-text-muted">${tr('Entre na sua conta para alterar a senha.', 'Sign in to change your password.')}</p>`;
+        } else {
+          const u = state.currentUser;
+          body.innerHTML = u ? `
+            <div class="space-y-3">
+              <input id="profName" type="text" maxlength="255" value="${escapeHtml(u.fullName)}" class="w-full theme-input rounded-xl px-3 py-2 text-xs" />
+              <textarea id="profBio" rows="3" maxlength="600" class="w-full theme-input rounded-xl px-3 py-2 text-xs">${escapeHtml(u.bio)}</textarea>
+              <button type="button" onclick="window.app.saveUserProfile()" class="w-full py-2 rounded-xl text-xs font-bold bg-emerald-600 text-white">Salvar Perfil</button>
+              ${u.authenticated ? `
+                <div class="border-t theme-border pt-3 space-y-2">
+                  ${imageUrl(u.profilePictureUrl) ? `<img src="${imageUrl(u.profilePictureUrl)}" alt="" class="w-12 h-12 rounded-full object-cover" />` : ''}
+                  <label class="block text-xs theme-text-primary">${tr('Foto de perfil (JPEG ou PNG)', 'Profile photo (JPEG or PNG)')}
+                    <input id="profilePictureFile" type="file" accept="image/jpeg,image/png" class="block mt-1 w-full text-xs" />
+                  </label>
+                  <button type="button" onclick="window.app.saveProfilePicture(this)" class="px-3 py-2 rounded-xl text-xs font-semibold surface-subtle theme-text-primary">${tr('Atualizar foto', 'Update photo')}</button>
+                </div>` : ''}
+            </div>
+          ` : `<p class="text-xs theme-text-muted">Faça login para editar seu perfil.</p>`;
+        }
+      }
+
+      const app = {
+        setWelcomeTab(tab) {
+          if (accountRequestInProgress) return;
+          welcomeTab = tab;
+          renderWelcome();
+        },
+        async submitWelcome(form) {
+          if (accountRequestInProgress) return;
+          const data = new FormData(form);
+          const credentials = { email: data.get('email').trim(), password: data.get('password') };
+          const errorMessage = form.querySelector('[data-error]');
+          const button = form.querySelector('button');
+          errorMessage.hidden = true;
+          button.disabled = true;
+          accountRequestInProgress = true;
+          try {
+            if (welcomeTab === 'register') {
+              await accountRequest('/api/auth/register', 'POST', {
+                ...credentials, fullName: data.get('fullName').trim()
+              });
+            }
+            useAccount(await accountRequest('/api/auth/login', 'POST', credentials));
+            form.reset();
+          } catch (error) {
+            errorMessage.textContent = error.message;
+            errorMessage.hidden = false;
+          } finally {
+            accountRequestInProgress = false;
+            button.disabled = false;
+          }
+        },
+        browseCategory(category) {
+          state.searchFilters = { q: '', category, genre: 'todos', tag: '' };
+          document.getElementById('headerSearchInput').value = '';
+          app.navigate('busca');
+        },
+        navigate(viewName) {
+          state.currentView = viewName;
+          renderCurrentView();
+        },
+        toggleTheme() {
+          state.theme = state.theme === 'dark' ? 'light' : 'dark';
+          renderCurrentView();
+          showToast(
+            tr(`Tema alterado para modo ${state.theme === 'dark' ? 'Escuro' : 'Claro'}.`,
+               `Switched to ${state.theme === 'dark' ? 'Dark' : 'Light'} mode.`),
+            'info'
+          );
+        },
+        toggleLanguage() {
+          state.lang = state.lang === 'pt' ? 'en' : 'pt';
+          renderCurrentView();
+          syncPlayerBarUI();
+          showToast(
+            state.lang === 'en' ? 'Language switched to English (EN-US).' : 'Idioma alterado para Português (PT-BR).',
+            'info'
+          );
+        },
+
+        handleQuickSearch(val) {
+          if (state.currentView !== 'busca') {
+            state.searchFilters = { q: '', category: 'TODOS', genre: 'todos', tag: '' };
+          }
+          state.searchFilters.q = val;
+          if (state.currentView !== 'busca') state.currentView = 'busca';
+          renderCurrentView();
+        },
+        updateSearchFilter(field, val) {
+          state.searchFilters[field] = val;
+          if (field === 'q') document.getElementById('headerSearchInput').value = val;
+          renderCurrentView();
+        },
+        resetSearchFilters() {
+          state.searchFilters = { q: '', category: 'TODOS', genre: 'todos', tag: '' };
+          const headerInput = document.getElementById('headerSearchInput');
+          if (headerInput) headerInput.value = '';
+          renderCurrentView();
+        },
+        playTrack(trackId) {
+          const track = state.tracks.find(x => x.id === trackId);
+          if (!track || track.status !== 'ATIVO') {
+            showToast(tr('Obra suspensa ou indisponível.', 'Track suspended or unavailable.'), 'warning');
+            return;
+          }
+          if (state.player.currentTrackId !== trackId) {
+            state.player.currentTrackId = trackId;
+            state.player.currentTime = 0;
+            state.player.listenedContinuousSeconds = 0;
+            state.player.validatedCurrentSession = false;
+          } else {
+            app.togglePlayPause();
+            return;
+          }
+          state.player.isPlaying = true;
+          syncAudioPlayback(track);
+          syncPlayerBarUI();
+          renderCurrentView();
+        },
+        togglePlayPause() {
+          const track = state.tracks.find(track => track.id === state.player.currentTrackId);
+          if (!track || track.status !== 'ATIVO') return;
+          state.player.isPlaying = !state.player.isPlaying;
+          syncAudioPlayback(track);
+          syncPlayerBarUI();
+          renderCurrentView();
+        },
+        seekRelative(deltaSec) {
+          app.seekToSecond(state.player.currentTime + deltaSec);
+        },
+        seekToSecond(sec) {
+          const track = state.tracks.find(x => x.id === state.player.currentTrackId) || state.tracks[0];
+          if (!track) return;
+          state.player.currentTime = Math.max(0, Math.min(track.durationSeconds, Number(sec) || 0));
+          if (track.serverId && originalTrackId === track.id) originalAudio.currentTime = state.player.currentTime;
+          syncPlayerBarUI();
+        },
+        prevTrack() {
+          const q = state.player.queueTrackIds;
+          if (q.length === 0) return;
+          const idx = q.indexOf(state.player.currentTrackId);
+          const prevIdx = idx > 0 ? idx - 1 : q.length - 1;
+          state.player.currentTrackId = -1;
+          app.playTrack(q[prevIdx]);
+        },
+        nextTrack(automatic = false) {
+          const player = state.player;
+          const queue = player.queueTrackIds;
+          const index = queue.indexOf(player.currentTrackId);
+          const available = ids => ids.filter(id => state.tracks.some(track => track.id === id && track.status === 'ATIVO'));
+          let candidates = available(queue.slice(index + 1));
+          if (candidates.length === 0 && (!automatic || player.repeatMode === 'ALL')) {
+            candidates = available(queue.slice(0, index + 1));
+          }
+          if (!candidates.length) {
+            player.isPlaying = false;
+            originalAudio.pause();
+            syncPlayerBarUI();
+            renderCurrentView();
+            return;
+          }
+          const firstId = candidates[0];
+          const nextId = player.shuffle ? candidates[Math.floor(Math.random() * candidates.length)] : firstId;
+          if (nextId !== firstId) {
+            const firstPosition = queue.indexOf(firstId);
+            const nextPosition = queue.indexOf(nextId);
+            queue[firstPosition] = nextId;
+            queue[nextPosition] = firstId;
+          }
+          player.currentTrackId = -1;
+          app.playTrack(nextId);
+        },
+        toggleShuffle() {
+          state.player.shuffle = !state.player.shuffle;
+          syncPlayerBarUI();
+        },
+        toggleRepeat() {
+          const order = ['OFF', 'ALL', 'ONE'];
+          const nextIndex = (order.indexOf(state.player.repeatMode) + 1) % order.length;
+          state.player.repeatMode = order[nextIndex];
+          syncPlayerBarUI();
+        },
+        setVolume(val) {
+          state.player.volume = Number(val);
+          state.player.muted = state.player.volume === 0;
+          originalAudio.volume = state.player.volume / 100;
+          originalAudio.muted = state.player.muted;
+          document.getElementById('btnMute').textContent = state.player.muted ? '🔇' : '🔊';
+        },
+        toggleMute() {
+          state.player.muted = !state.player.muted;
+          originalAudio.muted = state.player.muted;
+          document.getElementById('btnMute').textContent = state.player.muted ? '🔇' : '🔊';
+        },
+        toggleQueueDrawer() {
+          document.getElementById('queueDrawer').classList.toggle('hidden');
+          renderQueueDrawerList();
+        },
+        addToQueue(trackId, playNext) {
+          const queue = state.player.queueTrackIds.filter(id => id !== trackId);
+          if (playNext) {
+            queue.splice(queue.indexOf(state.player.currentTrackId) + 1, 0, trackId);
+          } else {
+            queue.push(trackId);
+          }
+          state.player.queueTrackIds = queue;
+          syncPlayerBarUI();
+          showToast(tr('Faixa adicionada à fila.', 'Track added to queue.'), 'success');
+        },
+        removeFromQueueIndex(idx) {
+          state.player.queueTrackIds.splice(idx, 1);
+          syncPlayerBarUI();
+        },
+        clearQueue() {
+          state.player.queueTrackIds = [state.player.currentTrackId];
+          syncPlayerBarUI();
+        },
+        async toggleFavoriteTrack(trackId) {
+          const user = state.currentUser;
+          if (!user?.authenticated || updatingFavorite) return;
+          updatingFavorite = true;
+          try {
+            const favorites = await accountRequest(`/api/auth/favorites/${trackId}`, 'PUT', {
+              favorite: !user.favoriteTrackIds.includes(trackId)
+            });
+            if (state.currentUser?.id === user.id) {
+              state.currentUser.favoriteTrackIds = favorites;
+              syncPlayerBarUI();
+              renderCurrentView();
+            }
+          } catch (error) {
+            showToast(error.message, 'error');
+          } finally {
+            updatingFavorite = false;
+          }
+        },
+        toggleFavoriteCurrentTrack() {
+          app.toggleFavoriteTrack(state.player.currentTrackId);
+        },
+        selectPlaylist(pid) {
+          state.selectedPlaylistId = pid;
+          renderCurrentView();
+        },
+        createPlaylist() {
+          const name = (document.getElementById('newPlaylistName')?.value || '').trim();
+          const desc = (document.getElementById('newPlaylistDesc')?.value || '').trim();
+          if (!name) return;
+          const newPl = { id: Date.now(), name, description: desc, publicVisible: true, ownerUserId: state.currentUser.id, ownerName: state.currentUser.fullName, trackIds: [] };
+          state.playlists.push(newPl);
+          state.selectedPlaylistId = newPl.id;
+          renderCurrentView();
+        },
+        addTrackToPlaylist(playlistId, trackId) {
+          const pl = state.playlists.find(p => p.id === playlistId);
+          const track = state.tracks.find(x => x.id === trackId);
+          if (!pl || !track) return;
+          if (pl.trackIds.includes(trackId)) {
+            state.pendingDuplicateInsert = { playlistId, trackId };
+            document.getElementById('duplicateModalText').textContent =
+              tr(`A faixa "${track.title}" já consta na playlist "${pl.name}". Deseja reinseri-la?`,
+                 `Track "${track.title}" is already in playlist "${pl.name}". Insert duplicate anyway?`);
+            document.getElementById('duplicateConfirmModal').classList.remove('hidden');
+            return;
+          }
+          pl.trackIds.push(trackId);
+          showToast(tr('Adicionada à playlist!', 'Added to playlist!'), 'success');
+          renderCurrentView();
+        },
+        confirmDuplicatePlaylistInsert() {
+          if (state.pendingDuplicateInsert) {
+            const { playlistId, trackId } = state.pendingDuplicateInsert;
+            const pl = state.playlists.find(p => p.id === playlistId);
+            if (pl) pl.trackIds.push(trackId);
+          }
+          state.pendingDuplicateInsert = null;
+          document.getElementById('duplicateConfirmModal').classList.add('hidden');
+          renderCurrentView();
+        },
+        cancelDuplicatePlaylistInsert() {
+          state.pendingDuplicateInsert = null;
+          document.getElementById('duplicateConfirmModal').classList.add('hidden');
+        },
+        movePlaylistTrack(playlistId, idx, dir) {
+          const pl = state.playlists.find(p => p.id === playlistId);
+          if (!pl) return;
+          const targetIdx = idx + dir;
+          if (targetIdx < 0 || targetIdx >= pl.trackIds.length) return;
+          const tmp = pl.trackIds[idx];
+          pl.trackIds[idx] = pl.trackIds[targetIdx];
+          pl.trackIds[targetIdx] = tmp;
+          renderCurrentView();
+        },
+        removePlaylistTrack(playlistId, idx) {
+          const pl = state.playlists.find(p => p.id === playlistId);
+          if (pl) pl.trackIds.splice(idx, 1);
+          renderCurrentView();
+        },
+        togglePlaylistVisibility(playlistId) {
+          const pl = state.playlists.find(p => p.id === playlistId);
+          if (pl) pl.publicVisible = !pl.publicVisible;
+          renderCurrentView();
+        },
+        playPlaylist(playlistId) {
+          const pl = state.playlists.find(p => p.id === playlistId);
+          if (!pl || pl.trackIds.length === 0) return;
+          state.player.queueTrackIds = [...pl.trackIds];
+          state.player.currentTrackId = -1;
+          app.playTrack(pl.trackIds[0]);
+        },
+        openArtistProfile(artistId) {
+          state.selectedArtistId = artistId;
+          state.currentView = 'artistas';
+          renderCurrentView();
+        },
+        toggleFollowArtist(artistId) {
+          if (!state.currentUser) return;
+          const artist = state.artists.find(a => a.id === artistId);
+          if (!artist) return;
+          const idx = state.currentUser.followedArtistIds.indexOf(artistId);
+          if (idx >= 0) {
+            state.currentUser.followedArtistIds.splice(idx, 1);
+            artist.followersCount -= 1;
+          } else {
+            state.currentUser.followedArtistIds.push(artistId);
+            artist.followersCount += 1;
+          }
+          renderCurrentView();
+        },
+        playAlbum(albumId) {
+          const tracks = state.tracks.filter(x => x.albumId === albumId && x.status === 'ATIVO');
+          if (tracks.length === 0) return;
+          state.player.queueTrackIds = tracks.map(x => x.id);
+          state.player.currentTrackId = -1;
+          app.playTrack(tracks[0].id);
+        },
+        createArtistProfile() {
+          const name = (document.getElementById('newArtistName')?.value || '').trim();
+          const genres = (document.getElementById('newArtistGenres')?.value || '').trim();
+          const bio = (document.getElementById('newArtistBio')?.value || '').trim();
+          if (!name || !genres) return;
+          const newArtist = { id: Date.now(), artisticName: name, genres, biography: bio, photoGrad: 'grad-cyan', ownerUserId: 2, followersCount: 1 };
+          state.artists.push(newArtist);
+          state.selectedArtistId = newArtist.id;
+          renderCurrentView();
+        },
+        createAlbumWithTracks(forceEmptyErrorTest) {
+          const title = (document.getElementById('newAlbumTitle')?.value || '').trim() || 'Novo Álbum';
+          const modality = document.getElementById('newAlbumModality')?.value || 'ALBUM';
+          const checkedIds = forceEmptyErrorTest ? [] : Array.from(document.querySelectorAll('.new-album-track-checkbox:checked')).map(cb => Number(cb.value));
+          if (checkedIds.length === 0) {
+            showToast(tr('Proibido publicar álbum sem vincular ao menos uma faixa!', 'Cannot publish an album with zero tracks!'), 'error');
+            return;
+          }
+          const artist = state.artists.find(a => a.id === state.selectedArtistId) || state.artists[0];
+          const newAlb = { id: Date.now(), title, modality, artistId: artist.id, artistName: artist.artisticName, releaseYear: 2026, releaseDate: '2026-11-11', description: 'Novo lançamento', coverGrad: 'grad-violet', participatingArtists: artist.artisticName };
+          state.albums.push(newAlb);
+          renderCurrentView();
+        },
+        selectCoverFile(file) {
+          if (isPublishing) return;
+          clearCoverSelection();
+          const draft = state.uploadDraft;
+          if (file) {
+            if (!/\.(jpe?g|png)$/i.test(file.name) || file.size > 8 * 1024 * 1024) {
+              showToast(tr('Selecione uma imagem JPEG ou PNG de até 8 MB.', 'Choose a JPEG or PNG image up to 8 MB.'), 'error');
+              renderCurrentView();
+              return;
+            }
+            selectedCoverFile = file;
+            selectedCoverUrl = URL.createObjectURL(file);
+            const preview = new Image();
+            preview.onload = () => {
+              if (selectedCoverFile !== file) return;
+              draft.coverWidth = preview.naturalWidth;
+              draft.coverHeight = preview.naturalHeight;
+              coverReady = true;
+              renderCurrentView();
+            };
+            preview.onerror = () => {
+              if (selectedCoverFile !== file) return;
+              clearCoverSelection();
+              showToast(tr('Não foi possível abrir a capa.', 'The cover image could not be opened.'), 'error');
+              renderCurrentView();
+            };
+            preview.src = selectedCoverUrl;
+          }
+          renderCurrentView();
+        },
+        selectAudioFile(file) {
+          selectedAudioFile = null;
+          selectedAudioDuration = 0;
+          if (!file) {
+            renderCurrentView();
+            return;
+          }
+          const format = file.name.split('.').pop().toUpperCase();
+          if (!['WAV', 'FLAC', 'MP3'].includes(format) || file.size > 150 * 1024 * 1024) {
+            showToast(tr('Selecione um WAV, FLAC ou MP3 de até 150 MB.', 'Select a WAV, FLAC or MP3 file up to 150 MB.'), 'error');
+            renderCurrentView();
+            return;
+          }
+          selectedAudioFile = file;
+          const draft = state.uploadDraft;
+          draft.title = file.name.replace(/\.[^.]+$/, '').slice(0, 255);
+          draft.audioFormat = format;
+          const url = URL.createObjectURL(file);
+          const probe = new Audio();
+          probe.preload = 'metadata';
+          function releaseProbe() {
+            probe.removeAttribute('src');
+            probe.load();
+            URL.revokeObjectURL(url);
+          }
+          probe.addEventListener('loadedmetadata', () => {
+            const duration = probe.duration;
+            releaseProbe();
+            if (selectedAudioFile !== file) return;
+            if (Number.isFinite(duration) && duration > 0) {
+              selectedAudioDuration = Math.ceil(duration);
+              draft.bitrateKbps = Math.max(1, Math.round(file.size * 8 / duration / 1000));
+              renderCurrentView();
+            }
+          }, { once: true });
+          probe.addEventListener('error', () => {
+            releaseProbe();
+            if (selectedAudioFile !== file) return;
+            showToast(tr('O navegador não conseguiu ler esse arquivo de áudio.', 'The browser could not read this audio file.'), 'error');
+          }, { once: true });
+          probe.src = url;
+          renderCurrentView();
+        },
+        updateUploadDraft(field, val) {
+          state.uploadDraft[field] = val;
+        },
+        async confirmPublishTrack() {
+          if (isPublishing) return;
+          const d = state.uploadDraft;
+          const message = !selectedAudioFile ? tr('Selecione o arquivo de áudio.', 'Select an audio file.')
+            : !selectedAudioDuration ? tr('Aguarde a leitura do áudio ou selecione outro arquivo.', 'Wait for the file to load or choose another.')
+            : !d.title.trim() || !d.authors.trim() ? tr('Preencha o título e o nome do artista.', 'Enter a title and artist name.')
+            : d.audioFormat === 'MP3' && d.bitrateKbps < 320 ? tr('Selecione um MP3 de 320 kbps.', 'Select a 320 kbps MP3.')
+            : selectedCoverFile && (!coverReady || d.coverWidth < 1400 || d.coverHeight < 1400)
+              ? tr('A capa precisa ter pelo menos 1400 × 1400 px.', 'Cover images must be at least 1400 × 1400 px.')
+              : '';
+          if (message) {
+            showToast(message, 'error');
+            return;
+          }
+          const data = new FormData();
+          data.append('audio', selectedAudioFile);
+          if (selectedCoverFile) data.append('cover', selectedCoverFile);
+          const metadata = {
+            title: d.title.trim(), category: d.category, modality: d.modality,
+            authors: d.authors, genre: d.genre, tags: d.tags, description: d.description,
+            audioFormat: d.audioFormat, bitrateKbps: d.bitrateKbps,
+            coverWidth: selectedCoverFile ? d.coverWidth : 1600, coverHeight: selectedCoverFile ? d.coverHeight : 1600,
+            durationSeconds: selectedAudioDuration
+          };
+          data.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+          isPublishing = true;
+          renderCurrentView();
+          try {
+            const track = uploadedTrack(await catalogRequest('/api/catalog/tracks', { method: 'POST', body: data }));
+            if (!state.tracks.some(item => item.id === track.id)) state.tracks.unshift(track);
+            selectedAudioFile = null;
+            selectedAudioDuration = 0;
+            clearCoverSelection();
+            d.title = '';
+            showToast(tr('Áudio publicado no acervo.', 'Audio published to the catalog.'), 'success');
+          } catch (error) {
+            showToast(error.message, 'error');
+          } finally {
+            isPublishing = false;
+            renderCurrentView();
+          }
+        },
+        async quickEditTrackTitle(trackId) {
+          const item = state.tracks.find(x => x.id === trackId);
+          if (!item) return;
+          const title = window.prompt(tr('Novo título da faixa', 'New track title'), item.title)?.trim();
+          if (!title || title === item.title) return;
+          if (title.length > 255) {
+            showToast(tr('Use até 255 caracteres no título.', 'Use up to 255 characters.'), 'error');
+            return;
+          }
+          if (item.serverId) {
+            try {
+              await catalogRequest(`/api/catalog/tracks/${item.serverId}`, {
+                method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title })
+              });
+            } catch (error) {
+              showToast(error.message, 'error');
+              return;
+            }
+          }
+          item.title = title;
+          renderCurrentView();
+        },
+        async removeTrackByAuthor(trackId) {
+          const item = state.tracks.find(x => x.id === trackId);
+          if (!item || !window.confirm(tr('Remover esta faixa do catálogo?', 'Remove this track from the catalog?'))) return;
+          if (item.serverId) {
+            try {
+              await catalogRequest(`/api/catalog/tracks/${item.serverId}`, { method: 'DELETE' });
+            } catch (error) {
+              showToast(error.message, 'error');
+              return;
+            }
+            if (state.player.currentTrackId === item.id && state.player.isPlaying) {
+              state.player.isPlaying = false;
+              syncAudioPlayback(item);
+            }
+          }
+          item.status = 'REMOVIDO';
+          state.reports.forEach(r => {
+            if (r.trackId === trackId && r.status === 'PENDENTE') {
+              r.status = 'ENCERRADA_PERDA_OBJETO';
+              r.technicalOpinion = 'Encerrada por perda de objeto.';
+            }
+          });
+          renderCurrentView();
+        },
+        setAnalyticsPeriod(period) {
+          state.analyticsPeriod = period;
+          renderCurrentView();
+        },
+        openReportModal(trackId) {
+          const track = state.tracks.find(x => x.id === trackId) || state.tracks[0];
+          state.reportTargetTrackId = track.id;
+          document.getElementById('reportModalTrackLabel').textContent = `${track.title} (${track.authors})`;
+          document.getElementById('reportModal').classList.remove('hidden');
+        },
+        closeReportModal() {
+          document.getElementById('reportModal').classList.add('hidden');
+        },
+        submitReport() {
+          const track = state.tracks.find(x => x.id === state.reportTargetTrackId);
+          if (!track) return;
+          state.reports.unshift({
+            id: Date.now(),
+            trackId: track.id,
+            trackTitle: track.title,
+            creatorName: track.authors,
+            reporterUserId: 1,
+            reporterName: state.currentUser ? state.currentUser.fullName : 'Ouvinte',
+            reason: document.getElementById('reportReasonSelect').value,
+            description: document.getElementById('reportDetailsInput').value || 'Verificação autoral.',
+            status: 'PENDENTE',
+            technicalOpinion: '',
+            moderatorName: '',
+            createdAt: nowFormatted()
+          });
+          app.closeReportModal();
+          showToast(tr('Denúncia enviada à fila de moderação.', 'Report submitted to moderation queue.'), 'success');
+          renderCurrentView();
+        },
+        resolveReport(reportId, decision) {
+          const rep = state.reports.find(r => r.id === reportId);
+          if (!rep) return;
+          const opinion = document.getElementById(`modOpinion_${reportId}`)?.value || 'Parecer registrado.';
+          const track = state.tracks.find(x => x.id === rep.trackId);
+          if (!track || track.status === 'REMOVIDO') {
+            rep.status = 'ENCERRADA_PERDA_OBJETO';
+          } else if (decision === 'SUSPENDER') {
+            track.status = 'SUSPENSO';
+            rep.status = 'PROCEDENTE_SUSPENSO';
+          } else {
+            rep.status = 'INDEFERIDA_ARQUIVADA';
+          }
+          rep.technicalOpinion = opinion;
+          logAudit(`MODERACAO_${rep.status}`, rep.trackTitle, opinion);
+          renderCurrentView();
+        },
+        getUserRole(userId) {
+          const u = state.users.find(x => x.id === userId);
+          return u ? u.role : 'OUVINTE';
+        },
+        changeUserRole(userId, newRole) {
+          const target = state.users.find(u => u.id === userId);
+          if (!target) return;
+          if (target.role === 'ADMINISTRADOR' && newRole !== 'ADMINISTRADOR') {
+            const activeAdmins = state.users.filter(u => u.role === 'ADMINISTRADOR' && !u.blocked).length;
+            if (activeAdmins <= 1) {
+              showToast(tr('Proibido revogar o único Administrador Mestre ativo!', 'Cannot revoke the sole active Master Administrator!'), 'error');
+              renderCurrentView();
+              return;
+            }
+          }
+          target.role = newRole;
+          logAudit('ALTERACAO_PAPEL', target.email, `Novo papel: ${newRole}`);
+          renderCurrentView();
+        },
+        toggleUserBlocked(userId) {
+          const target = state.users.find(u => u.id === userId);
+          if (!target) return;
+          if (!target.blocked && target.role === 'ADMINISTRADOR') {
+            const activeAdmins = state.users.filter(u => u.role === 'ADMINISTRADOR' && !u.blocked).length;
+            if (activeAdmins <= 1) {
+              showToast(tr('Proibido bloquear o único Administrador Mestre ativo!', 'Cannot block the sole active Master Administrator!'), 'error');
+              return;
+            }
+          }
+          target.blocked = !target.blocked;
+          renderCurrentView();
+        },
+        triggerManualBackup() {
+          const snap = `snapshot_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`;
+          logAudit('BACKUP_24H', snap, 'Backup completo realizado.');
+          showToast(tr(`Backup ${snap} concluído!`, `Backup ${snap} completed!`), 'success');
+          renderCurrentView();
+        },
+        openAuthModal() {
+          state.authModalTab = 'profile';
+          document.getElementById('authModal').classList.remove('hidden');
+          renderAuthModalContent();
+        },
+        closeAuthModal() {
+          document.getElementById('authModal').classList.add('hidden');
+        },
+        setAuthTab(tab) {
+          state.authModalTab = tab;
+          renderAuthModalContent();
+        },
+        async logoutSession() {
+          try {
+            await catalogRequest('/api/auth/session', { method: 'DELETE' });
+            state.player.isPlaying = false;
+            syncAudioPlayback(null);
+            state.currentUser = null;
+            selectedAudioFile = null;
+            selectedAudioDuration = 0;
+            clearCoverSelection();
+            state.uploadDraft = { ...initialState.uploadDraft };
+            app.closeAuthModal();
+            document.getElementById('queueDrawer').classList.add('hidden');
+            showWorkspace(false);
+            app.setWelcomeTab('login');
+          } catch (error) {
+            showToast(error.message, 'error');
+          }
+        },
+        async submitPasswordRecovery() {
+          try {
+            await accountRequest('/api/auth/recover', 'POST', {
+              email: state.currentUser.email,
+              currentPassword: document.getElementById('recCurrentPass').value,
+              newPassword: document.getElementById('recNewPass').value
+            });
+            showToast(tr('Senha atualizada.', 'Password updated.'), 'success');
+            app.setAuthTab('profile');
+          } catch (error) {
+            showToast(error.message, 'error');
+          }
+        },
+        async saveUserProfile() {
+          if (!state.currentUser) return;
+          const fullName = document.getElementById('profName')?.value.trim() || state.currentUser.fullName;
+          const bio = document.getElementById('profBio')?.value ?? state.currentUser.bio;
+          if (state.currentUser.authenticated) {
+            try {
+              useAccount(await accountRequest(`/api/auth/profile/${state.currentUser.id}`, 'PUT', { fullName, bio }));
+            } catch (error) {
+              showToast(error.message, 'error');
+              return;
+            }
+          } else {
+            Object.assign(state.currentUser, { fullName, bio });
+            renderCurrentView();
+          }
+          app.closeAuthModal();
+        },
+        async saveProfilePicture(button) {
+          const file = document.getElementById('profilePictureFile')?.files[0];
+          if (!file || !/\.(jpe?g|png)$/i.test(file.name) || file.size > 8 * 1024 * 1024) {
+            showToast(tr('Selecione uma imagem JPEG ou PNG de até 8 MB.', 'Choose a JPEG or PNG image up to 8 MB.'), 'error');
+            return;
+          }
+          const data = new FormData();
+          data.append('picture', file);
+          button.disabled = true;
+          try {
+            const updated = await catalogRequest('/api/auth/profile/picture', { method: 'POST', body: data });
+            if (state.currentUser?.authenticated && state.currentUser.id === updated.id) {
+              useAccount(updated);
+              renderAuthModalContent();
+            }
+            showToast(tr('Foto de perfil atualizada.', 'Profile photo updated.'), 'success');
+          } catch (error) {
+            showToast(error.message, 'error');
+          } finally {
+            button.disabled = false;
+          }
+        }
+      };
+
+      window.app = app;
+
+      originalAudio.addEventListener('ended', () => {
+        if (originalTrackId !== state.player.currentTrackId) return;
+        if (state.player.repeatMode === 'ONE') {
+          originalAudio.currentTime = 0;
+          syncAudioPlayback(state.tracks.find(track => track.id === originalTrackId));
+        } else {
+          state.player.isPlaying = false;
+          app.nextTrack(true);
+          syncPlayerBarUI();
+          renderCurrentView();
+        }
+      });
+
+      window.addEventListener('DOMContentLoaded', () => {
+        renderWelcome();
+        startPlaybackInterval();
+        restoreAccount();
+      });
+    })();
+  </script>
+</body>
+</html>
